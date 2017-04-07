@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+  <widget xmlns   = "http://www.w3.org/ns/widgets"
+    xmlns:gap   = "http://phonegap.com/ns/1.0"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    id          = "com.rpower.dash"
+    versionCode = "21"
+    version     = "2.0.1" >
+
+    <name>RPOWER Dashboard</name>
+
+    <description>
+        RPOWER Dashboard
+    </description>
+
+    <author href="http://www.rpower.com" email="support@rpower.com">
+        K3 Software
+    </author>
+
+    <icon src="res/icon/icon.png" />
+    <icon src="res/icon/android/icon-36-ldpi.png"   gap:platform="android"    gap:qualifier="ldpi" />
+    <icon src="res/icon/android/icon-48-mdpi.png"   gap:platform="android"    gap:qualifier="mdpi" />
+    <icon src="res/icon/android/icon-72-hdpi.png"   gap:platform="android"    gap:qualifier="hdpi" />
+    <icon src="res/icon/android/icon-96-xhdpi.png"  gap:platform="android"    gap:qualifier="xhdpi" />
+    <icon src="res/icon/ios/icon-57.png"            gap:platform="ios"        width="57" height="57" />
+    <icon src="res/icon/ios/icon-72.png"            gap:platform="ios"        width="72" height="72" />
+    <icon src="res/icon/ios/icon-57-2x.png"         gap:platform="ios"        width="114" height="114" />
+    <icon src="res/icon/ios/icon-72-2x.png"         gap:platform="ios"        width="144" height="144" />
+    <icon src="res/icon/ios/icon-76.png"            gap:platform="ios"        width="76" height="76" />
+    <icon src="res/icon/ios/icon-76-2x.png"         gap:platform="ios"        width="152" height="152" />
+    <icon src="res/icon/ios/icon-120.png"            gap:platform="ios"        width="120" height="120" />
+
+    <gap:config-file platform="ios" parent="CFBundleShortVersionString">
+      <string>2.0.1</string>
+    </gap:config-file>
+
+    <gap:config-file platform="android" parent="/manifest">
+       <application android:debuggable="true" />
+    </gap:config-file>
+
+    <access origin="*" />
+    <plugin name="cordova-plugin-whitelist" spec="1.2.2" />
+    <allow-intent href="http://*/*" />
+    <allow-intent href="https://*/*" />
+    <allow-intent href="tel:*" />
+    <allow-intent href="sms:*" />
+    <allow-intent href="mailto:*" />
+    <allow-intent href="geo:*" />
+
+    <platform name="android">
+      <allow-intent href="market:*" />
+    </platform>
+
+    <platform name="ios">
+      <allow-intent href="itms:*" />
+      <allow-intent href="itms-apps:*" />
+    </platform>
+</widget>

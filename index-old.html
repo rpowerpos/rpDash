@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="utf-8">
+   <meta http-equiv="X-UA-Compatible" content="IE=edge">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+   <title>D2</title>
+</head>
+
+<body>
+
+     <script src="js/jquery.min.js"></script>
+     <script src="js/bootstrap.min.js"></script>
+     <script src="js/scripts.min.js"></script>
+     <script src="js/jquery-ui.min.js"></script>
+     <script src="js/datepicker.js"></script>
+     <script src="js/k3.js"></script>
+     <script type="text/javascript" charset="utf-8" src="cordova.js"></script>
+
+     <link rel="stylesheet" href="css/bootstrap.min.css">
+     <link rel="stylesheet" href="css/font-awesome.min.css">
+     <link rel="stylesheet" href="css/bootsnipp.min.css">
+     <link rel="stylesheet" href="css/jquery-ui.css">
+     <link rel="stylesheet" href="css/epos.css">
+     <link rel="stylesheet" href="css/datepicker.css">
+
+<script>
+
+var isCordovaApp = !!window.cordova;
+
+if (isCordovaApp == true)
+{
+   document.addEventListener("backbutton", onBackKeyDown, false);
+   document.addEventListener("deviceready", onDeviceReady, false);
+   document.addEventListener("pause", onDevicePause, false);
+   document.addEventListener("resume", onDeviceResume, false);
+}
+else
+{
+   docReady();
+}
+
+
+function onBackKeyDown()
+{
+    e.preventDefault();
+}
+
+function onDeviceReady()
+{
+   window.plugins.uniqueDeviceID.get(uuidDone);
+}
+
+function onDevicePause()
+{
+
+}
+
+function onDeviceResume()
+{
+   var selectedDate = localStorage.getItem("selectedDate");
+   var today = dateToday();
+   if (selectedDate != today && localStorage.getItem("1stRun") == 0)
+   {
+      $('#mPBody').html('<h2>Switch to today?</h2>');
+      $('#mPFooter').html('<button type=\"button\" class=\"btn btn-danger pull-left\" id=\"btnNoSTT\">NO</button><button type=\"button\" class=\"btn btn-success pull-right\" id=\"btnYesSTT\">YES</button>');
+      $('#modalPrompt').modal('show');
+   }
+}
+
+function uuidDone(uuid)
+{
+   var selectedDate = localStorage.getItem("selectedDate");
+   var today = dateToday();
+   if (selectedDate != today && localStorage.getItem("1stRun") == 0)
+   {
+      $('#mPBody').html('<h2>Switch to today?</h2>');
+      $('#mPFooter').html('<button type=\"button\" class=\"btn btn-danger pull-left\" id=\"btnNoSTT\">NO</button><button type=\"button\" class=\"btn btn-success pull-right\" id=\"btnYesSTT\">YES</button>');
+      $('#modalPrompt').modal('show');
+   }
+   docReady(uuid);
+}
+
+
+
+function docReady(uuid)
+{
+
+   localStorage.setItem("uuid", uuid);
+
+   $(document).ready(function()
+   {
+      window.setInterval(function()
+      {
+         var cg = localStorage.getItem("cg");
+         var token = localStorage.getItem("token");
+         var selectedStore = localStorage.getItem("selectedStore");
+         checkUpdateTime(cg, selectedStore);
+      }, 5000);
+
+      $("#error").hide();
+      $("#errorMsg").hide();
+      $("#user").val(localStorage.getItem("user"));
+      $("#pass").val(localStorage.getItem("pass"));
+      $("#license").val(localStorage.getItem("license"));
+
+      if (!localStorage.getItem("token"))
+      {
+         $("#error").show();
+         $('#settings').modal("show");
+         localStorage.setItem("1stRun", 1);
+      }
+      else
+      {
+         // 1st load.. We wont have lastPage so load overview
+         if (localStorage.getItem("lastPage"))
+         {
+            var page = localStorage.getItem("lastPage");
+            window[page](); //Load function from variable
+         }
+         else
+         {
+            overview();
+            //[m1] - overview and other pages can do their own checks..
+         }
+
+         //[m1] this is probably where we could chain... below this is just setting
+         //random options that should never get unset unless the app is uninstalled.
+         //in that case, saveSettings can do the chain.
+
+         var token = localStorage.getItem('token');
+         var user = localStorage.getItem('user');
+         storeList(token, user);
+      }
+
+      if (localStorage.getItem("selectedDate"))
+      {
+         $("#datepicker").datepicker('update', localStorage.getItem("selectedDate"));
+      }
+      else
+      {
+         $("#datepicker").datepicker('update', 'today');
+      }
+
+      if (!localStorage.getItem("needUpdate"))
+      {
+         localStorage.setItem("needUpdate", 1);
+      }
+
+      $(window).on('shown.bs.modal', function (e)
+      {
+         $('#user').focus();
+      });
+
+      $('#settings').bind('keypress', function(e)
+      {
+         if (e.keyCode == 13)
+         {
+            $('#saveSettings').click();
+         }
+         if (e.keyCode == 27)
+         {
+            $('#settings').modal('hide');
+
+            if (localStorage.getItem("token"))
+            {
+               $("#error").hide();
+            }
+         }
+      });
+
+         // Close Menu on selection //
+      $(function()
+      {
+        var navMain = $("#navbar");
+        navMain.on("click", "a", null, function ()
+        {
+           navMain.collapse('hide');
+        });
+      });
+         // End Close Menu on selection //
+
+
+
+         $('#modalPrompt').on('click', 'button', function()
+         {
+            if(this.id == 'btnYesSTT')
+            {
+               $('#modalPrompt').modal('hide');
+               var today = dateToday();
+               localStorage.setItem("selectedDate", today);
+               $("#datepicker").datepicker('update', 'today');
+               localStorage.setItem("needUpdate", 1);
+            }
+            if(this.id == 'btnNoSTT')
+            {
+               $('#modalPrompt').modal('hide');
+            }
+         });
+
+         ////////////////////////////////////////////////////////////////////////////////
+         //                         Click/Change Handlers                              //
+         ////////////////////////////////////////////////////////////////////////////////
+
+            $('#saveSettings').click(function()
+            {
+               var user = $("#user").val();
+               var pass = $("#pass").val();
+               var license = $("#license").val();
+
+               if (localStorage.getItem("user"))
+               {
+                  localStorage.setItem("userChanged", 1);
+               }
+
+               localStorage.setItem('user', user);
+               localStorage.setItem('pass', pass);
+               localStorage.setItem('uuid', uuid);
+               localStorage.setItem('license', license);
+
+               // [m1] gettoken can chain storelist
+               getToken(user, pass, uuid, license);
+            });
+
+            $('#cancelSettings').click(function()
+            {
+               if (localStorage.getItem("token"))
+               {
+                  $("#error").hide();
+               }
+            });
+
+            $('#datepicker').datepicker().on('changeDate',function(ev)
+            {
+                 var selectedDate = ev.date.setTime( ev.date.getTime() + ev.date.getTimezoneOffset()*60*1000 );
+                 var selectedDate = dateFormat(ev.date);
+                 localStorage.setItem("selectedDate", selectedDate);
+                 var user = localStorage.getItem("user");
+                 var pass = localStorage.getItem("pass");
+                 var selectedStore = localStorage.getItem("selectedStore");
+                 var selectedDate = localStorage.getItem("selectedDate");
+                 var token = localStorage.getItem("token");
+                 var cg = localStorage.getItem("cg");
+                 var uuid = localStorage.getItem("uuid");
+                 var license = localStorage.getItem("license");
+                 checkToken(user, pass, token, selectedStore, selectedDate, uuid, license);
+                 localStorage.setItem("needUpdate", "1");
+                 refreshData(cg, selectedStore, token, selectedStore, selectedDate, uuid, license);
+              });
+
+            $('#ddStoreList').click(function(e)
+            {
+               e.preventDefault();
+
+               if (!e.target.dataset.storemid)
+               {
+               }
+               else
+               {
+                  var selectedStore = e.target.dataset.storemid;
+                  var storeName = e.target.dataset.storename;
+                  var cg = e.target.dataset.storecg;
+                  localStorage.setItem("needUpdate", 1);
+                  localStorage.setItem("cg", cg);
+                  localStorage.setItem("selectedStore", selectedStore);
+                  var user = localStorage.getItem("user");
+                  var pass = localStorage.getItem("pass");
+                  var token = localStorage.getItem("token");
+                  var selectedDate = localStorage.getItem("selectedDate");
+                  var uuid = localStorage.getItem("uuid");
+                  var license = localStorage.getItem("license");
+                  $("#storeButtonText").html(storeName);
+                  checkToken(user, pass, token, selectedStore, selectedDate, uuid, license);
+                  refreshData(cg, selectedStore, token, selectedStore, selectedDate, uuid, license);
+               }
+            });
+
+            $('#overviewPage').click(function(e)
+            {
+               e.preventDefault();
+               localStorage.setItem("lastPage", "overview");
+               overview();
+            });
+
+            $('#salesPage').click(function(e)
+            {
+               e.preventDefault();
+               localStorage.setItem("lastPage", "sales");
+               sales();
+            });
+
+            $('#disvoidPage').click(function(e)
+            {
+               e.preventDefault();
+               localStorage.setItem("lastPage", "disvoid");
+               disvoid();
+            });
+
+            $('#laborPage').click(function(e)
+            {
+               e.preventDefault();
+               localStorage.setItem("lastPage", "labor");
+               labor();
+            });
+
+            $('#alertPage').click(function(e)
+            {
+               e.preventDefault();
+               localStorage.setItem("lastPage", "overview");
+               alerts();
+            });
+
+            $('#utilsPage').click(function(e)
+            {
+               e.preventDefault();
+               localStorage.setItem("lastPage", "utils");
+               utils();
+            });
+
+
+            $('#openSettings').click(function(e)
+            {
+               e.preventDefault();
+               openSettings();
+            });
+
+            $('#closeButton').click(function(e)
+            {
+               $('#mGHeader').html('');
+               $('#mGBody').html('');
+               $('#modalGeneric').modal("hide");
+            });
+
+         ////////////////////////////////////////////////////////////////////////////////
+         //                        End Click Handlers                                  //
+         ////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+   ////////////////////////////////////////////////////////////////////////////////
+   //                         Functions                                          //
+   ////////////////////////////////////////////////////////////////////////////////
+
+   function getToken(user, pass, uuid, license)
+   {
+      var postData = {user: user, pass: pass, uuid: uuid, license: license};
+
+      $.ajax({
+         url: 'http://192.168.0.193:11718/api.php?XDEBUG_SESSION_START=785F535D&op=authUser',
+         type: "POST",
+         dataType: 'json',
+         data: postData,
+         crossDomain: true,
+         success: function(data)
+         {
+            var token = data.token;
+            var rpowerCg = data.storeCg;
+            var userID = data.id;
+            localStorage.setItem("cg", rpowerCg);
+            localStorage.setItem("token", token);
+            localStorage.setItem("userID", userID);
+
+            if (data == 401)
+            {
+               $("#body").hide();
+               $("#error").show();
+               $("#errorMsg").show();
+               throw new Error("Wrong response from auth!");
+            }
+            else if (data == 42)
+            {
+               // [m1] License/UUID mismatch
+               $("#body").hide();
+               $("#error").show();
+               $("#errorMsg").show();
+            }
+            else
+            {
+               console.log('Got token!');
+               $("#errorMsg").hide();
+               $("#error").hide();
+               $('#settings').modal('hide');
+               var user = localStorage.getItem('user');
+               storeList(token, user);
+            }
+         },
+      });
+   }
+
+   function checkUpdateTime(cg, selectedStore)
+   {
+      var user = localStorage.getItem("user");
+      var storePost = {cg: cg, selectedStore: selectedStore, user: user};
+
+      $.ajax({
+         url: 'http://192.168.0.193:11718/api.php?XDEBUG_SESSION_START=785F535D&op=storeLastUpdate',
+         type: "POST",
+         dataType: 'json',
+         data: storePost,
+         crossDomain: true,
+         success: function(data)
+         {
+            var lastUpdateSQL = new Date(data[0].lup_zdttm).toUTCString();
+            var lastUpdateLS = new Date(localStorage.getItem("lastUpdate")).toUTCString();
+            var lastMessageAck = localStorage.getItem("lastMessageAck");
+            // processMessage(lastMessageAck);
+
+   /*
+            if (data[999999999])
+            {
+               processMessage(data[999999999].lastMessageAck)
+            }
+   */
+            if (lastUpdateSQL != lastUpdateLS)
+            {
+               localStorage.setItem("lastUpdate", lastUpdateSQL);
+               localStorage.setItem("needUpdate", 1);
+            }
+         },
+      });
+   }
+
+   function checkToken(user, pass, token, selectedStore, selectedDate, uuid, license)
+   {
+         if (typeof uuid == undefined)
+         {
+            var postData = {token: token, user: user, pass: pass, license: license};
+         }
+         else
+         {
+            var postData = {token: token, user: user, pass: pass, uuid: uuid, license: license};
+         }
+
+         return $.ajax({
+            url: 'http://192.168.0.193:11718/api.php?XDEBUG_SESSION_START=785F535D&op=checkTokenAuth',
+            type: "POST",
+            dataType: 'json',
+            data: postData,
+            crossDomain: true,
+            success: function(data)
+            {
+               /* is this even necessary?
+               var rpowerStore = localStorage.getItem("selectedStore");
+               var rpowerCg = data.cg;
+               var selectedStore = localStorage.getItem("selectedStore");
+               var selectedDate = localStorage.getItem("selectedDate");
+               */
+               var user = localStorage.getItem("user");
+               var token = localStorage.getItem("token");
+//               return data;
+               //[m2] this is where you are working 12/13
+               //storeList(token, user);
+            },
+         });
+      }
+
+   function processMessage(lastMessageAck)
+   {
+      if (!lastMessageAck)
+      {
+         var now = dateHourNow();
+         localStorage.setItem("lastMessageAck", now)
+      }
+      else
+      {
+         var cg = localStorage.getItem("cg");
+         var storeMID = localStorage.getItem("selectedStore");
+         var token = localStorage.getItem("token");
+         var postData = {token: token, cg: cg, storeMID: storeMID, lastMessageAck: lastMessageAck};
+
+         $.ajax({
+            url: 'http://192.168.0.193:11718/api.php?XDEBUG_SESSION_START=785F535D&op=getMessages',
+            type: "POST",
+            dataType: 'json',
+            data: postData,
+            crossDomain: true,
+            success: function(data)
+            {
+               var messageCount = Object.size(data);
+               if (messageCount > 0)
+               {
+                  var header;
+                  var footer;
+
+                  for (var g = 0; g < messageCount; g++)
+                  {
+                     header = data[g].header;
+                     body = data[g].body;
+                     lastMessage = data[g].timestamp;
+                     $('#mGHeader').html(header);
+                     $('#mGBody').html(body);
+                     $('#modalGeneric').modal("show");
+                     localStorage.setItem("lastMessageAck", lastMessage);
+                  }
+
+                  console.log('We have a message!!');
+               }
+            },
+         });
+      }
+   }
+
+   function storeList(token, user)
+   {
+      var postData = {token: token, user: user};
+
+      $("#ddStoreList").empty();
+
+      $.ajax({
+         url: 'http://192.168.0.193:11718/api.php?XDEBUG_SESSION_START=785F535D&op=storeListByUser',
+         type: "POST",
+         dataType: 'json',
+         data: postData,
+         crossDomain: true,
+         success: function(data)
+         {
+            var storeArray = JSON.stringify(data);
+            localStorage.setItem("stores", storeArray);
+
+            for (var i = 0; i < data.length; i++)
+            {
+               name = data[i].tag_name;
+               mid = data[i].mid;
+               var currentCG = data[i].cg;
+               var currentSerial = data[i].serial_number;
+               storeLastUpdate = data[i].lup_zdttm;
+
+               if ((i == 0) && (!localStorage.getItem("selectedStore")) || localStorage.getItem("userChanged") == 1)
+               {
+                  localStorage.setItem("selectedStore", mid);
+                  if (localStorage.getItem("userChanged") == 1)
+                  {
+                     localStorage.setItem("userChanged", 2);
+                     currentCG = data[i].cg;
+                     currentSerial = data[i].serial_number;
+                  }
+               }
+
+               if (mid == localStorage.getItem('selectedStore'))
+               {
+                  $("#ddStoreList").prepend('<li><a data-storeLastUpdate="' + storeLastUpdate + '" data-storecg="' + currentCG + '" data-storemid="' + mid + '" data-storename="' + name + '" href="' + mid + '"><b>' + name + '</b></a></li>');
+                  $("#storeButtonText").html(name);
+                  localStorage.setItem("cg", currentCG);
+                  localStorage.setItem("serial", currentSerial)
+               }
+               else
+               {
+                  $("#ddStoreList").append('<li><a data-storeLastUpdate ="' + storeLastUpdate + '"  data-storecg="' + currentCG + '" data-storemid="' + mid + '" data-storename="' + name + '" href="' + mid + '">' + name + '</a></li>');
+               }
+            }
+
+            if (localStorage.getItem("userChanged") == 2)
+            {
+               localStorage.setItem("userChanged", 0);
+               userChange();
+            }
+         },
+         error: function(data)
+         {
+            console.log(data);
+         }
+      });
+
+      var today = dateToday();
+
+      if (!localStorage.getItem("selectedDate"))
+      {
+         localStorage.setItem("selectedDate", today);
+      }
+
+      localStorage.getItem("1stRun");
+
+      if (localStorage.getItem("1stRun") == 1)
+      {
+         localStorage.setItem("1stRun", 0);
+   	   overview();
+         $('#mGHeader').html('<h3>Welcome to your dashboard!</h3>');
+         $('#mGBody').html('Features are being added weekly so please keep this app up to date!!<br> To suggest a feature, please call or email your RPOWER Dealer.<br><br> \
+          <ul><li>Email Alerts - Speed of alerts depends on how often data is posted to RPOWER. This should be set between 5 and 15 min by your dealer.</li></ul>');
+         $('#modalGeneric').modal("show");
+      }
+   }
+
+   function userChange()
+   {
+      localStorage.removeItem("storeLastUpdate");
+      var cg = localStorage.getItem("cg");
+      var selectedStore = localStorage.getItem("selectedStore");
+      var user = localStorage.getItem("user");
+      var pass = localStorage.getItem("pass");
+      var token = localStorage.getItem("token");
+      var selectedDate = localStorage.getItem("selectedDate");
+      var serial = localStorage.getItem("serial");
+      var uuid = localStorage.getItem("uuid");
+      var license = localStorage.getItem("license");
+      dealerOfRecord(serial);
+      checkToken(user, pass, token, selectedStore, selectedDate, uuid, license);
+      location.reload();
+   }
+
+   function dealerOfRecord(serial)
+   {
+      var storePost = {serial: serial};
+
+      $.ajax({
+         url: 'http://192.168.0.193:11718/api.php?XDEBUG_SESSION_START=785F535D&op=dealerOfRecord',
+         type: "POST",
+         dataType: 'json',
+         data: storePost,
+         crossDomain: true,
+         success: function(data)
+         {
+            data = JSON.stringify(data);
+            localStorage.setItem("dor", data);
+         },
+      });
+   }
+
+   ////////////////////////////////////////////////////////////////////////////////
+   //                     End Functions                                          //
+   ////////////////////////////////////////////////////////////////////////////////
+
+      function sales() // I don't know why this needs to be here too.. Maybe I'll figure it out one day
+      {
+         $("#error").hide();
+         $("#body").html("");
+         $("#body").load("sales.html");
+      }
+
+   });
+   /////////////////////////////// End Doc Ready ////////////////////////////
+   /////////////////////////////// End Doc Ready ////////////////////////////
+   /////////////////////////////// End Doc Ready ////////////////////////////
+
+}
+
+
+   function overview()
+   {
+      $("#error").hide();
+      $("#body").html("");
+      $("#body").load("overview.html");
+   }
+
+   function sales()
+   {
+      $("#error").hide();
+      $("#body").html("");
+      $("#body").load("sales.html");
+   }
+
+   function disvoid()
+   {
+      $("#error").hide();
+      $("#body").html("");
+      $("#body").load("disvoid.html");
+   }
+
+   function labor()
+   {
+      $("#error").hide();
+      $("#body").html("");
+      $("#body").load("labor.html");
+   }
+
+   function openSettings()
+   {
+      $("#error").show();
+      $('#settings').modal("show");
+   }
+
+   function alerts()
+   {
+      $("#error").hide();
+      $("#body").html("");
+      $("#body").load("alerts.html");
+   }
+
+   function utils()
+   {
+      $("#error").hide();
+      $("#body").html("");
+      $("#body").load("utils.html");
+   }
+
+
+</script>
+
+<div class="container-fluid">
+   <nav class="navbar navbar-default">
+      <div class="container-fluid">
+         <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed pull-left" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+               <span class="sr-only">Toggle navigation</span>
+               <span class="icon-bar"></span>
+               <span class="icon-bar"></span>
+               <span class="icon-bar"></span>
+            </button>
+            <img class="pull-right" src="images/rpower.png" alt="" />
+         </div>
+         <div id="navbar" class="navbar-collapse collapse">
+            <ul class="nav navbar-nav">
+               <li id="overviewPage"><a href="">Overview</a></li>
+               <li id="salesPage"><a href="">Sales</a></li>
+               <li id="disvoidPage"><a href="">Discounts/Voids</a></li>
+               <li id="laborPage"><a href="">Labor</a></li>
+               <li id="alertPage"><a href="">Email Alerts</a></li>
+               <li id="openSettings"><a href="">Settings</a></li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+            </ul>
+         </div>
+      </div>
+   </nav>
+
+   <div class="container-fluid">
+      <div class="container-fluid dropdown-space-10px">
+         <div class="col-xs-6 centered">
+           <div class="input-append date pull-left" id="datepicker" data-autoclose="true" data-date-format="yyyy-mm-dd">
+             <span class="glyphicon glyphicon-menu-down color-white add-on"></span>
+              <input class="span6 centered input-no-border color-white glyphicon-menu-down" size="10" type="button"><span class="add-on"></span></input>
+           </div>
+         </div>
+
+        <div class="col-xs-6">
+          <div class="dropdown">
+            <button class="btn btn-default dropdown-toggle btn-full input-no-border" type="button" id="dropdownMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+              <span class="caret"></span>&nbsp&nbsp<span id="storeButtonText"></span>
+            </button>
+            <ul id="ddStoreList" class="dropdown-menu scrollable-menu" aria-labelledby="dropdownMenu">
+
+            </ul>
+          </div>
+       </div>
+     </div>
+
+
+
+     <div id="body">
+
+     </div>
+   </div>
+</div>
+
+
+<div id="error">
+   <div class="col col-xs-12">
+      <strong class="color-white"></strong><br><br><br><br><br>
+
+      <button type="button" class="btn btn-danger btn-lg" data-toggle="modal" data-target="#settings">
+         Settings
+      </button>
+
+<!-- Modal -->
+      <div class="modal fade" id="settings" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+         <div class="modal-dialog" role="document">
+            <div class="modal-content">
+               <div class="modal-header centered">
+                  <h4 class="modal-title" id="myModalLabel"><strong>Configuration Options</strong></h4>
+               </div>
+               <div class="modal-body">
+                  <ul class="nav nav-pills">
+                     <li class="active"><a data-toggle="pill" href="#account">Login</a></li>
+                  </ul>
+
+                  <div class="tab-content">
+                     <br>
+                     <div id="account" class="tab-pane fade in active">
+                        <div class="row row-xs-6 no-gutter">
+                           <div class="col col-xs-12 text-center"><input id="user" type="text" tabindex="1"></input></div>
+                        </div>
+
+                        <div class="row row-xs-12 text-center">
+                           <strong>Username</strong>
+                        </div>
+
+                        <br>
+
+                        <div class="row row-xs-6 no-gutter">
+                           <div class="col col-xs-12 text-center"><input id="pass" type="password" tabindex="2"></input></div>
+                        </div>
+
+                        <div class="row row-xs-12 text-center no-gutter">
+                           <strong>Password</strong>
+                        </div>
+
+                        <br>
+
+                        <div class="row row-xs-6 no-gutter">
+                           <div class="col col-xs-12 text-center"><input id="license" type="text" tabindex="3"></input></div>
+                        </div>
+
+                        <div class="row row-xs-12 text-center no-gutter">
+                           <strong>License Key</strong>
+                        </div>
+
+                     </div>
+
+                  </div> <!-- / Tab Content -->
+
+               </div>
+               <div class="modal-footer">
+                  <p id="errorMsg" class="pull-left btn-danger">Wrong User/Pass. Please try again.</p>
+                  <button id="cancelSettings" type="button" class="btn btn-danger" data-dismiss="modal" tabindex="4">Cancel</button>
+                  <button type="button" class="btn btn-success" id="saveSettings" tabindex="3">Save changes</button>
+               </div>
+            </div>
+         </div>
+      </div>
+   </div>
+</div>
+
+
+<div id="divModalGeneric">
+   <div class="modal fade" id="modalGeneric" tabindex="-1" role="dialog" aria-labelledby="myModalLabel1">
+      <div class="modal-dialog" role="document">
+         <div class="modal-content">
+            <div class="modal-header centered">
+               <h4 class="modal-title" id="myModalLabel"><p id="mGHeader"><strong>HEADER</strong></h4></p>
+            </div>
+            <div class="modal-body">
+               <p class="text-center" id="mGBody">
+
+               </p>
+            </div>
+            <div class="modal-footer text-center">
+               <p class="text-center" id="mGFooter">
+                  <button type="button" class="btn btn-danger" id="closeButton">Close</button>
+               </p>
+            </div>
+         </div>
+      </div>
+   </div>
+</div>
+
+<div id="divModalPrompt">
+   <div class="modal fade" id="modalPrompt" tabindex="-1" role="dialog" aria-labelledby="myModalLabel2">
+      <div class="modal-dialog" role="document">
+         <div class="modal-content">
+            <div class="modal-body">
+               <p class="text-center" id="mPBody">
+
+               </p>
+            </div>
+            <div class="modal-footer text-center">
+               <p class="text-center" id="mPFooter">
+               </p>
+            </div>
+         </div>
+      </div>
+   </div>
+</div>
+
+
+</body>

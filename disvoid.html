@@ -1,0 +1,254 @@
+<script>
+window.setInterval(function()
+{
+   if (localStorage.getItem("needUpdate") == 1)
+   {
+      var user = localStorage.getItem("user");
+      var pass = localStorage.getItem("pass");
+      var selectedStore = localStorage.getItem("selectedStore");
+      var selectedDate = localStorage.getItem("selectedDate");
+      var token = localStorage.getItem("token");
+      var cg = localStorage.getItem("cg");
+      //var uuid = localStorage.getItem("uuid");
+      var license = localStorage.getItem("license");
+      //refreshData(user, pass, cg, selectedStore, token, selectedStore, selectedDate, uuid, license);
+      refreshData(user, pass, cg, selectedStore, token, selectedStore, selectedDate, license);
+      localStorage.setItem("needUpdate", 0);
+   }
+}, 500);
+
+var user = localStorage.getItem("user");
+var pass = localStorage.getItem("pass");
+var selectedStore = localStorage.getItem("selectedStore");
+var selectedDate = localStorage.getItem("selectedDate");
+var token = localStorage.getItem("token");
+var cg = localStorage.getItem("cg");
+// var uuid = localStorage.getItem("uuid");
+var license = localStorage.getItem("license");
+// refreshData(user, pass, cg, selectedStore, token, selectedStore, selectedDate, uuid, license);
+refreshData(user, pass, cg, selectedStore, token, selectedStore, selectedDate, license);
+$('#error').hide();
+
+function refreshData(user, pass, rpowerCg, rpowerStore, token, selectedStore, selectedDate, license)
+{
+   postData = {user: user, pass: pass, cg: rpowerCg, store: selectedStore, token: token, selectedStore: selectedStore, selectedDate: selectedDate, license: license};
+
+   $.ajax({
+      url: 'http://rpower.com:1338/api.php?op=checkTokenAuth',
+      type: "POST",
+      dataType: 'json',
+      data: postData,
+      crossDomain: true,
+      success: function(data)
+      {
+         var xtags = data.xtags;
+         if (xtags != null && xtags.includes("mdash"))
+         {
+            var authorized = 1;
+         }
+         else
+         {
+            var authorized = 0;
+         }
+         if (authorized == 0)
+         {
+            var dealerInfo = JSON.parse(localStorage.getItem("dor"));
+            if (dealerInfo == null)
+            {
+               $('#mGHeader').html('Subscription Not Found');
+               $('#mGBody').html('<strong>Please Call Your Dealer For Assistance</strong>');
+               $('#mGFooter').html('<h6>RPOWER Point of Sale - (480) 425-2222</h6>');
+               $('#modalGeneric').modal("show");
+            }
+            else
+            {
+               var dealerName = dealerInfo[0].name;
+               var dealerAddress1 = dealerInfo[0].address1;
+               var dealerAddress2 = dealerInfo[0].address2;
+               var dealerCity = dealerInfo[0].city;
+               var dealerState = dealerInfo[0].state;
+               var dealerZip = dealerInfo[0].zip;
+               var dealerPhone = dealerInfo[0].phone;
+               var dealerWebsite = dealerInfo[0].website;
+               $('#mGHeader').html('Subscription Not Found');
+               $('#mGBody').html('<strong>Please Call Your Dealer For Assistance <br><br>' + dealerName + '<br>' + dealerAddress1 + '&nbsp' + dealerAddress2 + '<br>' + dealerCity + ' ' + dealerState + ' ' + dealerZip + '<br>' + dealerPhone + '<br>' + dealerWebsite + '<strong>');;
+               $('#mGFooter').html('<h6>RPOWER Point of Sale</h6>');
+               $('#modalGeneric').modal("show");
+            }
+         }
+         else
+         {
+            $.ajax({
+               url: 'http://rpower.com:1338/api.php?op=discountDetail',
+               dataType: 'json',
+               crossDomain: true,
+               method: 'post',
+               data: postData,
+               success: function(data) {
+
+                 var amtTotal = 0;
+                 var grandTotal = 0;
+                 var amt = 0;
+                 var html = "<table id=\"discountTable\" class=\"table table-striped table-condensed font-12px\" style=\"width:100%\" align=\"center\" border=\"2\"><thead><tr><th class=\"text-center\">Discount</th> \
+                 <th class=\"text-center\">Mgr</th> \
+                 <th class=\"text-center\">Tkt</th> \
+                 <th class=\"text-center\">Amt</th> \
+                 <th class=\"text-center\">Note</th> \
+                 </tr>\
+                 <tr>\
+                 <th class=\"text-center\" data-sort=\"string-ins\"> <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+                 <th class=\"text-center\" data-sort=\"string-ins\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+                 <th class=\"text-center\" data-sort=\"int\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+                 <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+                 <th class=\"text-center\" data-sort=\"string\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+                 </tr> \
+                 </thead><tbody>";
+
+                 var results = Object.size(data)-1;
+
+                 for (var i=0; i < results; i++)
+                 {
+                    discountName = data[i].discname;
+                    employeeName = data[i].empname;
+                    discountNote = data[i].note;
+                    amt = +data[i].real_total;
+                    ticket = data[i].ticket;
+                    qty = data[i].qty;
+                    ticketRID = data[i].ticket_rid;
+                    amtTotal = +amtTotal+amt;
+                    var re = /{\\}/g;
+                    discountNote = discountNote.replace(re, '<br>');
+                    html += "<tr id=RID" + ticketRID +">";
+                    html += "<td class=\"text-right\">" + discountName + " </td>";
+                    html += "<td class=\"text-right\">" + employeeName + " </td>";
+                    html += "<td class=\"text-right\"><a id=\"aRID\" data-rid=" + ticketRID + ">" + ticket + "</a></td>";
+                    html += "<td class=\"text-right\">" + round2dp(amt) + " </td>";
+                    html += "<td class=\"text-right\">" + discountNote + " </td>";
+                    html += "</tr>";
+                 }
+                 html += "</tbody><tfoot>";
+                 html += "<th class=\"text-center\">Totals</th>";
+                 html += "<th class=\"text-right\"></th>";
+                 html += "<th class=\"text-right\"> </th>";
+                 html += "<th class=\"text-right\">" + round2dp(amtTotal) + "</th>";
+                 html += "<th class=\"text-right\"> </th>";
+                 html += "</tr></tfoot>";
+                 $('#divDiscounts').html(html);
+                 $("#discountTable").stupidtable();
+
+                 $('tr[id^="RID"]').click(function(e){
+                     var rid = this.id.substring(3);
+                     var user = localStorage.getItem("user");
+                     var pass = localStorage.getItem("pass");
+                     var selectedStore = localStorage.getItem("selectedStore");
+                     var date = localStorage.getItem("selectedDate");
+                     var token = localStorage.getItem("token");
+                     var rpowerCG = localStorage.getItem("cg");
+                     // var uuid = localStorage.getItem("uuid");
+                     var license = localStorage.getItem("license");
+                    // k3ReconstructCheck(token, rpowerCG, selectedStore, date, rid, license, uuid);
+                    k3ReconstructCheck(token, rpowerCG, selectedStore, date, rid, license);
+                 });
+              },
+           });
+
+           $.ajax({
+             url: 'http://rpower.com:1338/api.php?op=voidDetail',
+            dataType: 'json',
+            crossDomain: true,
+            method: 'post',
+            data: postData,
+            success: function(data) {
+              var amtTotal = 0;
+               var grandTotal = 0;
+              var amt = 0;
+               var qtyTotal = 0;
+              var html = "<table id=\"tblVD\" class=\"table table-striped  table-condensed font-12px\" style=\"width:100%\" align=\"center\" border=\"2\"><thead><tr><th class=\"text-center\">Reason</th> \
+               <th class=\"text-center\">Mgr</th> \
+               <th class=\"text-center\">Item</th> \
+              <th class=\"text-center\">Qty</th> \
+               <th class=\"text-center\">Total</th> \
+              </tr>\
+              <tr>\
+              <th class=\"text-center\" data-sort=\"string-ins\"> <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+              <th class=\"text-center\" data-sort=\"string-ins\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+              <th class=\"text-center\" data-sort=\"string-ins\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+              <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+              <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+              </tr> \
+              </thead><tbody>";
+
+               var results = Object.size(data)-1;
+
+              for (var i=0; i < results; i++)
+               {
+
+                  sales = +data[i].sales;
+                  qty = +data[i].qty;
+                  ticket = data[i].ticket;
+                  ticketRID = data[i].ticket_rid;
+                  amtTotal = +amtTotal + sales;
+                  qtyTotal = +qty + qtyTotal;
+                  html += "<tr>";
+                  html += "<td class=\"text-right\">" + data[i].name + " </td>";
+                  html += "<td class=\"text-right\">" + data[i].mgr + " </td>";
+                  html += "<td class=\"text-right\">" + data[i].item + " </td>";
+                  html += "<td class=\"text-right\">" + round2dp(qty) + " </td>";
+                  html += "<td class=\"text-right\">" + round2dp(sales) + " </td>";
+                  html += "</tr>";
+              }
+               html += "</tbody><tfoot>";
+               html += "<th class=\"text-center\">Totals</th>";
+               html += "<th class=\"text-right\"></th>";
+               html += "<th class=\"text-right\"></th>";
+               html += "<th class=\"text-right\">" + round2dp(qtyTotal) + "</th>";
+               html += "<th class=\"text-right\">" + round2dp(amtTotal) + "</th>";
+               html += "</tr></tfoot>";
+              $('#voidsDiv').html(html);
+              $("#tblVD").stupidtable();
+           },
+         });
+     }
+
+      },
+   });
+}
+
+  $('a[id^="aRID"]').click(function(e){
+     k3ReconstructCheck(token, this.dataset.rid);
+  });
+
+  </script>
+
+<div class="container-fluid col-xs-12">
+   <div id="divSales" class="container-fluid">
+      <div class="row">
+         <div class="col-xs-12">
+            <div class="panel panel-default">
+               <div class="panel-heading">
+                  <i class="fa fa-pie-chart-o fa-fw"></i><b>Discounts</b>
+               </div>
+               <div class="panel-body">
+                  <div class="col-xs-12">
+                    <div class=" font-12px" id="divDiscounts"></div>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </div>
+      <div class="row">
+         <div class="col-xs-12">
+            <div class="panel panel-default">
+               <div class="panel-heading">
+                  <i class="fa fa-pie-chart-o fa-fw"></i><b>Voids</b>
+               </div>
+               <div class="panel-body">
+                  <div class="col-xs-12">
+                    <div class=" font-12px" id="voidsDiv"></div>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </div>
+   </div>
+</div>

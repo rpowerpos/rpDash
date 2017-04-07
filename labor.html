@@ -1,0 +1,312 @@
+<script>
+window.setInterval(function()
+{
+   if (localStorage.getItem("needUpdate") == 1)
+   {
+      var user = localStorage.getItem("user");
+      var pass = localStorage.getItem("pass");
+      var selectedStore = localStorage.getItem("selectedStore");
+      var selectedDate = localStorage.getItem("selectedDate");
+      var token = localStorage.getItem("token");
+      var cg = localStorage.getItem("cg");
+      // var uuid = localStorage.getItem("uuid");
+      var license = localStorage.getItem("license");
+      // refreshData(user, pass, cg, selectedStore, token, selectedStore, selectedDate, uuid, license);
+      refreshData(user, pass, cg, selectedStore, token, selectedStore, selectedDate, license);
+      localStorage.setItem("needUpdate", 0);
+   }
+}, 500);
+
+var user = localStorage.getItem("user");
+var pass = localStorage.getItem("pass");
+var selectedStore = localStorage.getItem("selectedStore");
+var selectedDate = localStorage.getItem("selectedDate");
+var token = localStorage.getItem("token");
+var cg = localStorage.getItem("cg");
+// var uuid = localStorage.getItem("uuid");
+var license = localStorage.getItem("license");
+// refreshData(user, pass, cg, selectedStore, token, selectedStore, selectedDate, uuid, license);
+refreshData(user, pass, cg, selectedStore, token, selectedStore, selectedDate, license);
+$('#error').hide();
+
+//function refreshData(user, pass, rpowerCg, rpowerStore, token, selectedStore, selectedDate, uuid, license)
+function refreshData(user, pass, rpowerCg, rpowerStore, token, selectedStore, selectedDate, license)
+{
+   // postData = {user: user, pass: pass, cg: rpowerCg, store: selectedStore, token: token, selectedStore: selectedStore, selectedDate: selectedDate, uuid: uuid, license: license};
+   postData = {user: user, pass: pass, cg: rpowerCg, store: selectedStore, token: token, selectedStore: selectedStore, selectedDate: selectedDate, license: license};
+
+   $.ajax({
+      url: 'http://rpower.com:1338/api.php?op=checkTokenAuth',
+      type: "POST",
+      dataType: 'json',
+      data: postData,
+      crossDomain: true,
+      success: function(data)
+      {
+         var xtags = data.xtags;
+         if (xtags != null && xtags.includes("mdash"))
+         {
+            var authorized = 1;
+         }
+         else
+         {
+            var authorized = 0;
+         }
+         if (authorized == 0)
+         {
+            var dealerInfo = JSON.parse(localStorage.getItem("dor"));
+            if (dealerInfo == null)
+            {
+               $('#mGHeader').html('Subscription Not Found');
+               $('#mGBody').html('<strong>Please Call Your Dealer For Assistance</strong>');
+               $('#mGFooter').html('<h6>RPOWER Point of Sale - (480) 425-2222</h6>');
+               $('#modalGeneric').modal("show");
+            }
+            else
+            {
+               var dealerName = dealerInfo[0].name;
+               var dealerAddress1 = dealerInfo[0].address1;
+               var dealerAddress2 = dealerInfo[0].address2;
+               var dealerCity = dealerInfo[0].city;
+               var dealerState = dealerInfo[0].state;
+               var dealerZip = dealerInfo[0].zip;
+               var dealerPhone = dealerInfo[0].phone;
+               var dealerWebsite = dealerInfo[0].website;
+               $('#mGHeader').html('Subscription Not Found');
+               $('#mGBody').html('<strong>Please Call Your Dealer For Assistance <br><br>' + dealerName + '<br>' + dealerAddress1 + '&nbsp' + dealerAddress2 + '<br>' + dealerCity + ' ' + dealerState + ' ' + dealerZip + '<br>' + dealerPhone + '<br>' + dealerWebsite + '<strong>');;
+               $('#mGFooter').html('<h6>RPOWER Point of Sale</h6>');
+               $('#modalGeneric').modal("show");
+            }
+         }
+         else
+         {
+            $.ajax({
+               url: 'http://rpower.com:1338/api.php?op=tcDetail',
+               dataType: 'json',
+               crossDomain: true,
+               method: 'post',
+               data: postData,
+               success: function(data)
+               {
+                  var html = "<table id=\"tblTCD\" class=\"table table-striped table-condensed font-12px\" style=\"width:100%\" align=\"center\" border=\"2\"><thead><tr><th class=\"text-center\">Name</th> \
+                  <th class=\"text-center\">Dept</th> \
+                  <th class=\"text-center\">Reg</th> \
+                  <th class=\"text-center\">OT</th> \
+                  <th class=\"text-center\">DT</th> \
+                  <th class=\"text-center\">In / Out</th> \
+                  </tr> \
+                  <tr> \
+                  <th class=\"text-center\" data-sort=\"string-ins\"> <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+                  <th class=\"text-center\" data-sort=\"string-ins\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+                  <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span><span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+                  <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span><span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+                  <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span><span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+                  <th class=\"text-center\"><!-- NO SORT ON IN/OUT FIELD --></th> \
+                  </tr> \
+                  </thead><tbody>";
+
+                  var results = Object.size(data)-1;
+
+                  for (var i=0; i < results; i++)
+                  {
+                     staffName = data[i].staff_name;
+                     jobName = data[i].job_name;
+                     regHours = data[i].reg_hours;
+                     otHours = +data[i].ot_hours;
+                     dtHours = +data[i].dt_hours;
+                     inDttm = data[i].in_dttm;
+                     outDttm = data[i].out_dttm;
+                     breakMin = data[i].break_min;
+
+                     d = new Date(inDttm);
+                     iDateText = d.toTimeString();
+                     iDateText = iDateText.split(' ');
+                     iDateText = iDateText[0];
+                     iDateText = iDateText.substring(0, 5);
+
+                     d = new Date(outDttm);
+                     oDateText = d.toTimeString();
+                     oDateText = oDateText.split(' ');
+                     oDateText = oDateText[0];
+                     oDateText = oDateText.substring(0, 5);
+
+                     if (data[i].out_dttm == '2000-01-01 00:00:00.000')
+                     {
+                        html += "<tr class=\"success onClock\">";
+                        oDateText = "&nbsp";
+                     }
+                     else
+                     {
+                        html += "<tr class=\"danger offClock\">";
+                     }
+                     html += "<td class=\"text-right\">" + staffName + " </td>";
+                     html += "<td class=\"text-right\">" + jobName + " </td>";
+                     html += "<td class=\"text-right\">" + regHours + " </td>";
+                     html += "<td class=\"text-right\">" + otHours + " </td>";
+                     html += "<td class=\"text-right\">" + dtHours + " </td>";
+                     html += "<td class=\"text-right\">" + iDateText + '<br />' + oDateText + " </td>";
+                     html += "</tr>";
+                  }
+                  html += "</tbody><tfoot></tfoot>";
+
+                  $('#tcDetail').html(html);
+                  $("#tblTCD").stupidtable();
+               },
+            });
+
+            $.ajax({
+               url: 'http://rpower.com:1338/api.php?op=dashData',
+               type: "POST",
+               dataType: 'json',
+               data: postData,
+               crossDomain: true,
+               success: function(data)
+               {
+                  if (typeof data[0] == "undefined" || typeof data == null)
+                  {
+                     $('#lbrByDeptCat').html('No Sales Data');
+                  }
+                  else
+                  {
+                     var itemSales = round2dp(+data[0].item_sales - +data[0].grat + +data[0].total_discounts);
+
+                     $.ajax({
+                        url: 'http://rpower.com:1338/api.php?op=laborByDeptCat',
+                        dataType: 'json',
+                        crossDomain: true,
+                        method: 'post',
+                        data: postData,
+                        indexValue: {itemSales:itemSales},
+                        success: function(data)
+                        {
+                           var size = Object.size(data);
+                           var itemSales = this.indexValue.itemSales;
+                           var html = "<table class=\"table table-striped table-condensed font-12px\" style=\"width:100%\" align=\"center\" border=\"2\"><tr><th class=\"text-center\">Job</th> \
+                           <th class=\"text-center\">Pay</th> \
+                           <th class=\"text-center\">%</th> \
+                           </tr>";
+
+                           var payCat;
+                           var payCatPay;
+                           var payCatPayTotal = 0;
+                           var payCatPctTotal = 0;
+                           var payCatPayGT = 0;
+                           var payCatPctGT = 0;
+
+
+                           for (var key in data)
+                           {
+                              payCatPayTotal = 0;
+                              payCatPctTotal = 0;
+                              html += "<tr>";
+                              html += "<td class=\"text-left\"><b>" + key + "</b></td>";
+                              html += "<td class=\"text-right\">----</td>";
+                              html += "<td class=\"text-right\">----</td>";
+                              html += "</tr>";
+
+                              // This gets the array of master categories [m2] - display by category
+                             for (var info in data[key])
+                            {
+                              // This is where we will pull the data for each job
+                              //console.log(data[key][info]);
+                              payCat = info;
+                              payCatPay = data[key][info];
+                              percent = round2dp((+payCatPay / +itemSales)*100);
+                              html += "<tr>";
+                              html += "<td class=\"text-right\">" + payCat + " </td>";
+                              html += "<td class=\"text-right\">" + payCatPay + " </td>";
+                              html += "<td class=\"text-right\">" + percent + "</td>";
+                              html += "</tr>";
+                              payCatPctTotal += +percent;
+                              payCatPayTotal += +payCatPay;
+                              payCatPctGT += +percent;
+                              payCatPayGT += +payCatPay;
+
+                            }
+                            html += "<th class=\"text-center\">Total</th>";
+                            html += "<th class=\"text-right\">" + round2dp(payCatPayTotal) + "</th>";
+                            html += "<th class=\"text-right\">" + round2dp(payCatPctTotal) + " %</th>";
+                            html += "</tr>";
+                         }
+                         html += "<th class=\"text-center\">Grand Total</th>";
+                         html += "<th class=\"text-right\">" + round2dp(payCatPayGT) + "</th>";
+                         html += "<th class=\"text-right\">" + round2dp(payCatPctGT) + " %</th>";
+                         html += "</tr>";
+                         $('#lbrByDeptCat').html(html);
+                      },
+                   });
+                  }
+
+            },
+           error: function()
+           {
+             var html = "<table class=\"table table-striped table-condensed font-12px\" style=\"width:100%\" align=\"center\" border=\"2\"><tr><th class=\"text-center\">Job</th> \
+               <th class=\"text-center\">Pay</th> \
+               <th class=\"text-center\">%</th> \
+               </tr>";
+               html += "<th class=\"text-center\">Grand Total</th>";
+               html += "<th class=\"text-right\"></th>";
+               html += "<th class=\"text-right\"></th>";
+               html += "</tr>";
+               $('#lbrByDeptCat').html(html);
+           },
+       });
+      }
+      },
+   });
+}
+
+$('#btnAllPunches').click(function(e)
+{
+   $(".bgPunches > .btn").addClass("btn-default");
+   $(".bgPunches > .btn").removeClass("btn-success");
+   $("#btnAllPunches").addClass("btn-success");
+   $(".offClock").show();
+   $(".onClock").show();
+});
+
+$('#btnOnPunches').click(function(e)
+{
+   $(".bgPunches > .btn").addClass("btn-default");
+   $(".bgPunches > .btn").removeClass("btn-success");
+   $("#btnOnPunches").addClass("btn-success");
+   $(".offClock").hide();
+   $(".onClock").show();
+});
+
+$('#btnOffPunches').click(function(e)
+{
+   $(".bgPunches > .btn").addClass("btn-default");
+   $(".bgPunches > .btn").removeClass("btn-success");
+   $("#btnOffPunches").addClass("btn-success");
+   $(".offClock").show();
+   $(".onClock").hide();
+});
+</script>
+
+<div class="col-lg-6">
+  <div class="panel panel-default">
+    <div class="panel-heading">
+       <i class="fa fa-pie-chart-o fa-fw"></i><b>Labor Breakdown</b>
+    </div>
+    <div class="panel-body" style="overflow-y: scroll">
+       <div class="col-lg-12">
+          <div id="lbrByDeptCat"></div>
+       </div>
+    </div>
+  </div>
+</div>
+
+ <div class="col-lg-6">
+    <div class="panel panel-default">
+       <div class="panel-heading">
+          <b>Time Clock</b>
+          <b class="pull-right"><div class="btn-group bgPunches" role="group"><button type="button" class="btn btn-success btn-xs" id="btnAllPunches">All</button>&nbsp<button type="button" class="btn btn-default btn-xs" id="btnOnPunches">On Clock </button>&nbsp<button type="button" class="btn btn-default btn-xs" id="btnOffPunches">Off Clock</button></div></b>
+       </div>
+       <div class="panel-body" style="overflow-y: scroll">
+          <div class="col-lg-12">
+             <div id="tcDetail"></div>
+          </div>
+       </div>
+    </div>
+ </div>

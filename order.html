@@ -1,0 +1,198 @@
+<script>
+$(".incr-btn").on("click", function (e)
+{
+    var $button = $(this);
+    var oldValue = $button.parent().find('.quantity').val();
+    $button.parent().find('.incr-btn[data-action="decrease"]').removeClass('inactive');
+    if ($button.data('action') == "increase")
+    {
+        var newVal = parseFloat(oldValue) + 1;
+    }
+    else
+    {
+        // Don't allow decrementing below 1
+        if (oldValue > 0)
+        {
+            var newVal = parseFloat(oldValue) - 1;
+        }
+        else
+        {
+            newVal = 0;
+            $button.addClass('inactive');
+        }
+    }
+    $button.parent().find('.quantity').val(newVal);
+    e.preventDefault();
+});
+
+$("#btnOrder").click(function(e)
+{
+   var user = localStorage.getItem("user");
+   var pass = localStorage.getItem("pass");
+   var selectedStore = localStorage.getItem("selectedStore");
+   var token = localStorage.getItem("token");
+   var rpowerCG = localStorage.getItem("cg");
+   var license = localStorage.getItem("license");
+
+   var products = $('.product');
+   var aProduct = {};
+
+   var len = products.length;
+
+   for (var i=0; i < len; i++)
+   {
+      if (products[i].value > 0)
+      {
+         var product = products[i].dataset.product;
+         aProduct[product] = products[i].value;
+      }
+   }
+   var order = JSON.stringify(aProduct)
+
+   postData = {token: token, cg: rpowerCG, storeMID: selectedStore, license: license, data: order};
+
+   $.ajax({
+      url: 'http://rpower.com:1338/api.php?op=orderSupplies',
+      type: "POST",
+      dataType: 'json',
+      data: postData,
+      crossDomain: true,
+      success: function(data)
+      {
+         $('#mGHeader').html('<h3>Order Placed</h3>');
+         $('#mGBody').html('We have sent your supply order to your dealer.');
+         $('#modalGeneric').modal("show");
+         $('.product').each(function()
+         {
+            this.value = 0;
+         });
+
+      },
+      error: function(data)
+      {
+         $('#mGHeader').html('<h3>Order Status</h3>');
+         $('#mGBody').html('We were unable to send your order. Please contact your dealer');
+         $('#modalGeneric').modal("show");
+      },
+   });
+
+
+});
+
+$('#infoOrders').click(function(e)
+{
+  $('#mGHeader').html('<h3>Product Order Screen</h3>');
+  $('#mGBody').html('Products ordered will ship to the currently selected store');
+  $('#modalGeneric').modal("show");
+});
+
+</script>
+
+<div class="container-fluid">
+   <div class="row">
+      <div class="col-xs-12">
+         <div class="panel panel-default">
+            <div class="panel-heading centered">
+               <i class="fa fa-pie-chart-o fa-fw"></i><b>Order Supplies</b><small class="pull-right"><span id="infoOrders" class="glyphicon glyphicon-question-sign"></span></small>
+            </div>
+
+            <div class="panel-body" style="overflow-y: none">
+               <div class="row">
+                  <div class="col-xs-12">
+                     <div class="col-xs-8">
+                           <img src="images/thermal.jpg" height="100px" width="100px"><br /><strong>Thermal Paper</strong> <br /> 50 Rolls Per Case
+                     </div>
+                     <div class="col-xs-4">
+                        <div class="count-input space-bottom">
+                             <a class="incr-btn" data-action="decrease" href="#">–</a>
+                             <input class="quantity product" type="text" name="quantity" value="0" data-product="thermal"/>
+                             <a class="incr-btn" data-action="increase" href="#">&plus;</a>
+                         </div>
+                         <p class="text-center">Case(s)</p>
+                     </div>
+                  </div>
+               </div>
+
+               <hr />
+
+               <div class="row">
+                  <div class="col-xs-12">
+                     <div class="col-xs-8">
+                           <img src="images/thermal.jpg" height="100px" width="100px"><br /><strong>Impact (Kitchen) Paper Single Ply</strong><br /> 50 Rolls Per Case</td>
+                     </div>
+                     <div class="col-xs-4">
+                        <div class="count-input space-bottom">
+                             <a class="incr-btn" data-action="decrease" href="#">–</a>
+                             <input class="quantity product" type="text" name="quantity" value="0" data-product="kitchen-single"/>
+                             <a class="incr-btn" data-action="increase" href="#">&plus;</a>
+                         </div>
+                         <p class="text-center">Case(s)</p>
+                     </div>
+                  </div>
+               </div>
+
+               <hr />
+
+               <div class="row">
+                  <div class="col-xs-12">
+                     <div class="col-xs-8">
+                           <img src="images/thermal.jpg" height="100px" width="100px"><br /><strong>Impact (Kitchen) Paper Double Ply</strong><br /> 50 Rolls Per Case</td>
+                     </div>
+                     <div class="col-xs-4">
+                        <div class="count-input space-bottom">
+                            <a class="incr-btn" data-action="decrease" href="#">–</a>
+                            <input class="quantity product" type="text" name="quantity" value="0" data-product="kitchen-double"/>
+                            <a class="incr-btn" data-action="increase" href="#">&plus;</a>
+                         </div>
+                         <p class="text-center">Case(s)</p>
+                     </div>
+                  </div>
+               </div>
+
+               <hr />
+
+
+               <div class="row">
+                  <div class="col-xs-12">
+                     <div class="col-xs-8">
+                           <img src="images/ribbon.jpg" height="100px" width="100px"><br /><strong>Ribbon</strong> <br /> 6 Ribbons Per Box</td>
+                     </div>
+                     <div class="col-xs-4">
+                        <div class="count-input space-bottom">
+                             <a class="incr-btn" data-action="decrease" href="#">–</a>
+                             <input class="quantity product" type="text" name="quantity" value="0" data-product="ribbons"/>
+                             <a class="incr-btn" data-action="increase" href="#">&plus;</a>
+                         </div>
+                         <p class="text-center">Boxe(s)</p>
+                     </div>
+                  </div>
+               </div>
+
+               <hr />
+
+               <div class="row">
+                  <div class="col-xs-12">
+                     <div class="col-xs-8">
+                           <img src="images/cards.jpg" height="100px" width="100px"><br /><strong>Staff/MGT Cards</strong> <br /> 10 Per Pack</td>
+                     </div>
+                     <div class="col-xs-4">
+                        <div class="count-input space-bottom">
+                             <a class="incr-btn" data-action="decrease" href="#">–</a>
+                             <input class="quantity product" type="text" name="quantity" value="0" data-product="cards"/>
+                             <a class="incr-btn" data-action="increase" href="#">&plus;</a>
+                         </div>
+                         <p class="text-center">Pack(s)</p>
+                     </div>
+                  </div>
+               </div>
+
+               <hr />
+
+            </div>
+            <div class="panel-footer centered" style="overflow-y: none">
+               <button type="button" id="btnOrder" class="btn btn-success">Place Order</button>
+            </div>
+         </div>
+      </div>
+   </div>
+</div>

@@ -1,0 +1,396 @@
+<script>
+window.setInterval(function()
+{
+   if (localStorage.getItem("needUpdate") == 1)
+   {
+      var user = localStorage.getItem("user");
+      var pass = localStorage.getItem("pass");
+      var selectedStore = localStorage.getItem("selectedStore");
+      var selectedDate = localStorage.getItem("selectedDate");
+      var token = localStorage.getItem("token");
+      var cg = localStorage.getItem("cg");
+      //var uuid = localStorage.getItem("uuid");
+      var license = localStorage.getItem("license");
+      //refreshData(user, pass, cg, selectedStore, token, selectedStore, selectedDate, uuid, license);
+      refreshData(user, pass, cg, selectedStore, token, selectedStore, selectedDate, license);
+      localStorage.setItem("needUpdate", 0);
+   }
+}, 500);
+
+var user = localStorage.getItem("user");
+var pass = localStorage.getItem("pass");
+var selectedStore = localStorage.getItem("selectedStore");
+var selectedDate = localStorage.getItem("selectedDate");
+var token = localStorage.getItem("token");
+var cg = localStorage.getItem("cg");
+//var uuid = localStorage.getItem("uuid");
+var license = localStorage.getItem("license");
+//refreshData(user, pass, cg, selectedStore, token, selectedStore, selectedDate, uuid, license);
+refreshData(user, pass, cg, selectedStore, token, selectedStore, selectedDate, license);
+$('#error').hide();
+
+//function refreshData(user, pass, rpowerCg, selectedStore, token, selectedStore, selectedDate, uuid, license)
+function refreshData(user, pass, rpowerCg, selectedStore, token, selectedStore, selectedDate, license)
+{
+   //var server = 'http://192.168.0.66:11718/api.php?XDEBUG_SESSION_START&op=';
+   var server = 'http://rpower.com:1338/api.php?op=';
+   //postData = {user: user, pass: pass, cg: rpowerCg, store: selectedStore, token: token, selectedStore: selectedStore, selectedDate: selectedDate, uuid: uuid, license: license};
+   postData = {user: user, pass: pass, cg: rpowerCg, store: selectedStore, token: token, selectedStore: selectedStore, selectedDate: selectedDate, license: license};
+   $.ajax({
+      url: server + 'checkTokenAuth',
+      type: "POST",
+      dataType: 'json',
+      data: postData,
+      crossDomain: true,
+      success: function(data)
+      {
+         var xtags = data.xtags;
+         if (xtags != null && xtags.includes("mdash"))
+         {
+            var authorized = 1;
+         }
+         else
+         {
+            var authorized = 0;
+         }
+            if (authorized == 0)
+            {
+               var dealerInfo = JSON.parse(localStorage.getItem("dor"));
+               if (dealerInfo == null)
+               {
+                  $('#mGHeader').html('Subscription Not Found');
+                  $('#mGBody').html('<strong>Please Call Your Dealer For Assistance</strong>');
+                  $('#mGFooter').html('<h6>RPOWER Point of Sale - (480) 425-2222</h6>');
+                  $('#modalGeneric').modal("show");
+               }
+               else
+               {
+                  var dealerName = dealerInfo[0].name;
+                  var dealerAddress1 = dealerInfo[0].address1;
+                  var dealerAddress2 = dealerInfo[0].address2;
+                  var dealerCity = dealerInfo[0].city;
+                  var dealerState = dealerInfo[0].state;
+                  var dealerZip = dealerInfo[0].zip;
+                  var dealerPhone = dealerInfo[0].phone;
+                  var dealerWebsite = dealerInfo[0].website;
+                  $('#mGHeader').html('Subscription Not Found');
+                  $('#mGBody').html('<strong>Please Call Your Dealer For Assistance <br><br>' + dealerName + '<br>' + dealerAddress1 + '&nbsp' + dealerAddress2 + '<br>' + dealerCity + ' ' + dealerState + ' ' + dealerZip + '<br>' + dealerPhone + '<br>' + dealerWebsite + '<strong>');;
+                  $('#mGFooter').html('<h6>RPOWER Point of Sale</h6>');
+                  $('#modalGeneric').modal("show");
+               }
+            }
+            else
+            {
+               $.ajax({
+                  url: server + 'dashData',
+                  dataType: 'json',
+                  crossDomain: true,
+                  method: 'post',
+                  data: postData,
+                  success: function(data)
+                  {
+                     if (!data[999999999].bev_count)
+                     {
+                        var skipLastYear = 1;
+                     }
+                     else
+                     {
+                        var skipLastYear = 0;
+                     }
+
+                     if (data == null || data[0] == null || !data[0] || data[0].title == "NO DATA")
+                     {
+                        $('#totalDiscounts').html("No Data");
+                        $('#itemSales').html("No Data");
+                        $('#guests').html("No Data");
+                        $('#checks').html("No Data");
+                        $('#totalLaborCost').html("No Data");
+                        $('#laborPercent').html("No Data");
+                        //var skipLastYear = 1;
+                        $('#totalDiscountsLy').html("");
+                        $('#itemSalesLy').html("");
+                        $('#guestsLy').html("");
+                        $('#checksLy').html("");
+                     }
+                     else
+                     {
+                        $('#totalDiscounts').html(round2dp(+data[0].total_discounts));
+                        $('#itemSales').html(round2dp(+data[0].item_sales - +data[0].grat + +data[0].total_discounts + +data[0].houseGrat));
+                        $('#guests').html(+data[0].guest_count);
+                        $('#checks').html(+data[0].total_checks);
+                        var totalPIO = +data[0].paidIO;
+                        var itemSales = round2dp(+data[0].item_sales - +data[0].grat + +data[0].total_discounts + +data[0].houseGrat - totalPIO);
+                        //var skipLastYear = 0;
+
+                        if (data[999999999] && skipLastYear == 0)
+                        {
+                           $('#totalDiscountsLy').html("LY: " + round2dp(+data[999999999].total_discounts));
+                           $('#itemSalesLy').html("LY: " + round2dp(+data[999999999].item_sales - +data[999999999].grat + +data[0].total_discounts));
+                           $('#guestsLy').html("LY: " + +data[999999999].guest_count);
+                           $('#checksLy').html("LY: " + +data[999999999].total_checks);
+                           var itemSalesLy = round2dp(+data[999999999].item_sales - +data[999999999].grat + +data[0].total_discounts);
+                        }
+                     }
+
+                   $.ajax({
+                      url: server + 'totalLaborCost',
+                      dataType: 'json',
+                      crossDomain: true,
+                      method: 'post',
+                      data: postData,
+                      success: function(data) {
+
+                        if (!data[999999999].total_pay)
+                        {
+                           var skipLastYear = 1;
+                        }
+                        else
+                        {
+                           var skipLastYear = 0;
+                        }
+
+                        if (data == null || data[0] == null || data[0].total_pay == null || data[0].title == "NO DATA")
+                        {
+                           $('#laborPercent').html("No Data");
+                           $('#totalLaborCost').html("No Data");
+                           $('#laborPercentLy').html("");
+                           $('#totalLaborCostLy').html("");
+                        }
+                        else
+                        {
+                           $('#totalLaborCost').html(data[0].total_pay);
+                           var labor = data[0].total_pay;
+                           laborPercent = labor/itemSales;
+                           laborPercent = laborPercent*100
+                           laborPercent = laborPercent.toFixed(2)
+
+                           if (isNaN(laborPercent))
+                           {
+                              $('#laborPercent').html("No Sales");
+                           }
+                           else
+                           {
+                              $('#laborPercent').html(laborPercent + '%');
+                              //var skipLastYear = 0;
+                           }
+                        }
+
+                        if (data[999999999] && skipLastYear == 0)
+                        {
+                           var laborLy = data[999999999].total_pay;
+                           laborPercentLy = laborLy/itemSalesLy;
+                           laborPercentLy = laborPercentLy*100;
+                           laborPercentLy = laborPercentLy.toFixed(2);
+
+                           if (laborPercentLy > 0 )
+                           {
+                           $('#laborPercentLy').html("LY: " + laborPercentLy + '%');
+                           $('#totalLaborCostLy').html("LY: " + data[999999999].total_pay);
+                           }
+
+                        }
+                      },
+                   });
+                },
+
+                error: function(){
+                   $('#totalDiscounts').html("No Data");
+                   $('#itemSales').html("No Data");
+                   $('#guests').html("No Data");
+                   $('#checks').html("No Data");
+                   $('#totalLaborCost').html("No Data");
+                   $('#laborPercent').html("No Data");
+                },
+             });
+           }
+
+        },
+        error: function(data)
+        {
+           console.log(data);
+        }
+     });
+
+
+     $("div[id*='Ly']").click(function(e)
+     {
+        //console.log(e);
+        //var test = $('#this').val;
+     });
+}
+
+function round2dp(num)
+{
+ if(num === undefined || num === null)
+ {
+    num = 0;
+ }
+ return num.toFixed(2);
+};
+
+function k3StrToUpper(string)
+{
+   return string.toUpperCase();
+}
+
+$('.divGrossSales').click(function(e){
+   $("#error").hide();
+   $("#body").html("");
+   localStorage.setItem("lastPage", "sales");
+   $("#body").load("sales.html");
+});
+
+$('.divDiscounts').click(function(e){
+   $("#error").hide();
+   $("#body").html("");
+   localStorage.setItem("lastPage", "disvoid");
+   $("#body").load("disvoid.html");
+});
+
+$('.divLaborPct').click(function(e){
+   $("#error").hide();
+   $("#body").html("");
+   localStorage.setItem("lastPage", "labor");
+   $("#body").load("labor.html");
+});
+
+$('.divLaborDollars').click(function(e){
+   $("#error").hide();
+   $("#body").html("");
+   localStorage.setItem("lastPage", "labor");
+   $("#body").load("labor.html");
+});
+
+$('.divGuestCount').click(function(e){
+   $("#error").hide();
+   $("#body").html("");
+   localStorage.setItem("lastPage", "sales");
+   $("#body").load("sales.html");
+});
+
+$('.divTotalChecks').click(function(e){
+   $("#error").hide();
+   $("#body").html("");
+   localStorage.setItem("lastPage", "sales");
+   $("#body").load("sales.html");
+});
+
+$('#infoNetSales').click(function(e)
+{
+  $('#mGHeader').html('<h3>Net Sales</h3>');
+  $('#mGBody').html('This is a net amount that includes open checks but does not include Hash items such as Deposits and Gift Card Sales. This number can decrease due to discounts being added to checks.<br /> <b>Calculation: Item Sales - Discounts - Grat/Tips - Tax - Paid-Outs + \'House Grat\' = Net</b>');
+  $('#modalGeneric').modal("show");
+});
+</script>
+<!--
+<div class="container-fluid">
+   <div class="row">
+     <div class="col-xs-12">
+        <div class="col-xs-2">
+
+        </div>
+        <div class="col-xs-8">
+        <div class="btn-toolbar" role="toolbar">
+           <div class="btn-group" role="group">
+             <button type="button" class="btn btn-success">DAY</button>
+           </div>
+           <div class="btn-group" role="group">
+              <button type="button" class="btn btn-success">WTD</button>
+           </div>
+           <div class="btn-group" role="group">
+              <button type="button" class="btn btn-success">MTD</button>
+           </div>
+        </div>
+        </div>
+        <div class="col-xs-2">
+
+        </div>
+     </div>
+  </div>
+</div>
+-->
+<div class="container-fluid">
+  <div class="container-fluid">
+     <div class="row">
+        <div class="col-xs-12">
+           <div class="col-xs-6">
+              <div class="panel panel-default panel-heading-tile">
+                 <div class="panel-body">
+                    <h2 class="divGrossSales" id="divGrossSales"><b><div class="text-center" id="itemSales"></div></b></h2>
+                    <div class="panel-footer text-center">
+                      <b>Net</b><br /><span class="pull-left glyphicon glyphicon-question-sign" id="infoNetSales"></span><span class="divGrossSales pull-right glyphicon glyphicon-circle-arrow-right"></span>
+                      <b><div class="ly" id="itemSalesLy">&nbsp</div></b>
+                    </div>
+                 </div>
+              </div>
+           </div>
+           <div class="col-xs-6">
+             <div class="panel panel-default panel-tile panel-heading-tile">
+                <div class="panel-body">
+                   <h2 class="divDiscounts" id="divDiscounts"><b><div class="text-center" id="totalDiscounts"></div></b></h2>
+                     <div class="panel-footer text-center">
+                        <b>Disc</b><br /><span class="divDiscounts pull-right glyphicon glyphicon-circle-arrow-right"></span>
+                        <b><div class="ly" id="totalDiscountsLy">&nbsp</div></b>
+                     </div>
+                  </div>
+               </div>
+              </div>
+           </div>
+        </div>
+
+        <div class="row">
+           <div class="col-xs-12">
+              <div class="col-xs-6">
+                 <div class="panel panel-default panel-heading-tile">
+                    <div class="panel-body">
+                       <h2 class="divLaborPct" id="divLaborPct"><b><div class="text-center" id="laborPercent"></div></b></h2>
+                       <div class="panel-footer text-center">
+                         <b>Labor %</b><br /><span class="divLaborPct pull-right glyphicon glyphicon-circle-arrow-right"></span>
+                         <b><div class="ly" id="laborPercentLy">&nbsp</div></b>
+                       </div>
+                    </div>
+                 </div>
+              </div>
+              <div class="col-xs-6">
+                 <div class="panel panel-default panel-tile panel-heading-tile">
+                    <div class="panel-body">
+                       <h2 class="divLaborDollars" id="divLaborDollars"><b><div class="text-center" id="totalLaborCost"></div></b></h2>
+                       <div class="panel-footer text-center">
+                         <b>Labor $</b><br /><span class="divLaborDollars pull-right glyphicon glyphicon-circle-arrow-right"></span>
+                         <b><div class="ly" id="totalLaborCostLy">&nbsp</div></b>
+                       </div>
+                    </div>
+                 </div>
+              </div>
+           </div>
+        </div>
+
+        <div class="row">
+           <div class="col-xs-12">
+              <div class="col-xs-6">
+                 <div class="panel panel-default panel-heading-tile">
+                    <div class="panel-body">
+                       <h2 class="divGuestCount" id="divGuestCount"><b><div class="text-center" id="guests"></div></b></h2>
+                       <div class="panel-footer text-center">
+                         <b>Guests</b><br /><span class="divGuestCount pull-right glyphicon glyphicon-circle-arrow-right"></span>
+                         <b><div class="ly" id="guestsLy">&nbsp</div></b>
+                      </div>
+                    </div>
+                 </div>
+              </div>
+              <div class="col-xs-6">
+                 <div class="panel panel-default panel-heading-tile">
+                    <div class="panel-body">
+                       <h2 class="divTotalChecks" id="divTotalChecks"><b><div class="text-center" id="checks"></div></b></h2>
+                       <div class="panel-footer text-center">
+                         <b>Checks</b><br /><span class="divTotalChecks pull-right glyphicon glyphicon-circle-arrow-right"></span>
+                         <b><div class="ly" id="checksLy">&nbsp</div></b>
+                       </div>
+                    </div>
+                 </div>
+              </div>
+           </div>
+        </div>
+
+     </div>
+  </div>

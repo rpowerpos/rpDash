@@ -1,0 +1,1128 @@
+<script>
+window.setInterval(function()
+{
+   if (localStorage.getItem("needUpdate") == 1)
+   {
+      var user = localStorage.getItem("user");
+      var pass = localStorage.getItem("pass");
+      var selectedStore = localStorage.getItem("selectedStore");
+      var selectedDate = localStorage.getItem("selectedDate");
+      var token = localStorage.getItem("token");
+      var cg = localStorage.getItem("cg");
+      //var uuid = localStorage.getItem("uuid");
+      var license = localStorage.getItem("license");
+      //refreshData(user, pass, cg, selectedStore, token, selectedStore, selectedDate, uuid, license);
+      refreshData(user, pass, cg, selectedStore, token, selectedStore, selectedDate, license);
+      $(".bgTimeframe > .btn").addClass("btn-default");
+      $(".bgTimeframe > .btn").removeClass("btn-success");
+      $("#btnHourly").addClass("btn-success");
+      localStorage.setItem("needUpdate", 0);
+   }
+}, 500);
+
+var user = localStorage.getItem("user");
+var pass = localStorage.getItem("pass");
+var selectedStore = localStorage.getItem("selectedStore");
+var selectedDate = localStorage.getItem("selectedDate");
+var token = localStorage.getItem("token");
+var cg = localStorage.getItem("cg");
+//var uuid = localStorage.getItem("uuid");
+var license = localStorage.getItem("license");
+var timeFrame = 1;
+//refreshData(user, pass, cg, selectedStore, token, selectedStore, selectedDate, uuid, license);
+refreshData(user, pass, cg, selectedStore, token, selectedStore, selectedDate, license);
+$('#error').hide();
+
+//function refreshData(user, pass, rpowerCg, rpowerStore, token, selectedStore, selectedDate, uuid, license)
+function refreshData(user, pass, rpowerCg, rpowerStore, token, selectedStore, selectedDate, license)
+{
+   var date = selectedDate;
+   var selectedStore = selectedStore;
+   //postData = {user: user, pass: pass, cg: rpowerCg, store: selectedStore, token: token, selectedStore: selectedStore, selectedDate: selectedDate, uuid: uuid, license: license, timeFrame: timeFrame};
+   postData = {user: user, pass: pass, cg: rpowerCg, store: selectedStore, token: token, selectedStore: selectedStore, selectedDate: selectedDate, license: license, timeFrame: timeFrame};
+
+   $.ajax({
+      url: 'http://rpower.com:1338/api.php?op=checkTokenAuth',
+      type: "POST",
+      dataType: 'json',
+      data: postData,
+      crossDomain: true,
+      success: function(data)
+      {
+         var xtags = data.xtags;
+         if (xtags != null && xtags.includes("mdash"))
+         {
+            var authorized = 1;
+         }
+         else
+         {
+            var authorized = 0;
+         }
+         if (authorized == 0)
+         {
+            var dealerInfo = JSON.parse(localStorage.getItem("dor"));
+            if (dealerInfo == null)
+            {
+               $('#mGHeader').html('Subscription Not Found');
+               $('#mGBody').html('<strong>Please Call Your Dealer For Assistance</strong>');
+               $('#mGFooter').html('<h6>RPOWER Point of Sale - (480) 425-2222</h6>');
+               $('#modalGeneric').modal("show");
+            }
+            else
+            {
+               var dealerName = dealerInfo[0].name;
+               var dealerAddress1 = dealerInfo[0].address1;
+               var dealerAddress2 = dealerInfo[0].address2;
+               var dealerCity = dealerInfo[0].city;
+               var dealerState = dealerInfo[0].state;
+               var dealerZip = dealerInfo[0].zip;
+               var dealerPhone = dealerInfo[0].phone;
+               var dealerWebsite = dealerInfo[0].website;
+               $('#mGHeader').html('Subscription Not Found');
+               $('#mGBody').html('<strong>Please Call Your Dealer For Assistance <br><br>' + dealerName + '<br>' + dealerAddress1 + '&nbsp' + dealerAddress2 + '<br>' + dealerCity + ' ' + dealerState + ' ' + dealerZip + '<br>' + dealerPhone + '<br>' + dealerWebsite + '<strong>');;
+               $('#mGFooter').html('<h6>RPOWER Point of Sale</h6>');
+               $('#modalGeneric').modal("show");
+            }
+         }
+         else
+         {
+            $.ajax({
+               url: 'http://rpower.com:1338/api.php?op=dashData',
+               dataType: 'json',
+               crossDomain: true,
+               method: 'post',
+               data: postData,
+               success: function(data) {
+
+                  if (!data[999999999].bev_count)
+                  {
+                     var skipLastYear = 1;
+                  }
+                  else
+                  {
+                     var skipLastYear = 0;
+                  }
+
+                 if (data == null || data[0] == null || !data[0] || data[0].title == "NO DATA")
+                 {
+                    $('#totalGuests').html("NO DATA");
+                    $('#totalChecks').html("NO DATA");
+                    $('#totalEntrees').html("NO DATA");
+                    $('#grossSales').html("NO DATA");
+                    $('#checkAverage').html("NO DATA");
+                    $('#guestAverage').html("NO DATA");
+                    $('#totalGuestsLy').html("");
+                    $('#totalChecksLy').html("");
+                    $('#totalEntreesLy').html("");
+                    $('#grossSalesLy').html("");
+                    $('#checkAverageLy').html("");
+                    $('#guestAverageLy').html("");
+                 }
+                 else
+                 {
+                    var totalDiscounts = +data[0].total_discounts;
+                    var totalTips = +data[0].total_tips;
+                    var totalTax = +data[0].total_tax;
+                    var totalHash = +data[0].hash_sales;
+                    var totalPIO = +data.paidIO;
+                    var totalGuests = +data[0].guest_count;
+                    var totalChecks = +data[0].total_checks;
+                    var totalHouseGrat = +data[0].houseGrat;
+                    var itemSales = +data[0].item_sales + totalDiscounts + totalTax + totalTips + totalHash - totalPIO + totalHouseGrat;
+                    $('#totalBeverages').html(data[0].bev_count);
+                    $('#totalGuests').html(data[0].guest_count);
+                    $('#totalChecks').html(data[0].total_checks);
+                    $('#totalEntrees').html(data[0].entree_count);
+                    /* Moved this to payment methods to fix diff between ticket_item and ticket_sales totals - They might not be the same per Ted
+                    var grossSales = itemSales;
+                    $('#grossSales').html(grossSales.toFixed(2));
+
+                    var checkAverage = grossSales/data[0].total_checks;
+                    $('#checkAverage').html(checkAverage.toFixed(2));
+                    var guestAverage = grossSales/data[0].guest_count;
+                    $('#guestAverage').html(guestAverage.toFixed(2));
+                    */
+                    if (skipLastYear == 1)
+                    {
+                       paymentMethodDetails(postData, +data[0].guest_count, +data[0].total_checks, 0, +data[999999999].guest_count, +data[999999999].total_checks);
+                    }
+
+                    //var skipLastYear = 0;
+
+                 // [m2] here for now till all these break out in to funcitons
+                 hourlySales(postData, 'hourly');
+
+
+              }
+              if (data[999999999] && skipLastYear == 0)
+              {
+                 var totalDiscountsLy = +data[999999999].total_discounts;
+                 var totalTipsLy = +data[999999999].total_tips;
+                 var totalTaxLy = +data[999999999].total_tax;
+                 var totalHashLy = +data[999999999].hash_sales;
+                 var totalPIOLy = +data[999999999].paidIO;
+                 var itemSalesLy = +data[999999999].item_sales + totalDiscountsLy + totalTaxLy + totalTipsLy + totalHashLy - totalPIOLy;
+                 $('#totalGuestsLy').html("LY: " + data[999999999].guest_count);
+                 $('#totalChecksLy').html("LY: " + data[999999999].total_checks);
+                 $('#totalEntreesLy').html("LY: " + data[999999999].entree_count);
+                 var grossSalesLy = +itemSalesLy;
+                 $('#grossSalesLy').html("LY: " + grossSalesLy.toFixed(2));
+                 var totalBeveragesLy = data[999999999].bev_count;
+                 $('#totalBeveragesLy').html("LY: " + totalBeveragesLy);
+                 itemSalesLyNH = +data[999999999].item_sales + totalDiscountsLy + totalTaxLy + totalTipsLy - totalPIOLy;
+                 paymentMethodDetails(postData, +data[0].guest_count, +data[0].total_checks, itemSalesLyNH, +data[999999999].guest_count, +data[999999999].total_checks);
+              }
+              else
+              {
+                 $('#totalGuestsLy').html("");
+                 $('#totalChecksLy').html("");
+                 $('#totalEntreesLy').html("");
+                 $('#grossSalesLy').html("");
+                 $('#checkAverageLy').html("");
+                $('#guestAverageLy').html("");
+              }
+           },
+        });
+
+        $.ajax({
+           url: 'http://rpower.com:1338/api.php?op=profitCenterDetailsNew',
+           dataType: 'json',
+           crossDomain: true,
+           method: 'post',
+           data: postData,
+           success: function(data) {
+              var amtGT = 0;
+              var tipGT = 0;
+              var taxGT = 0;
+              var grandTotal = 0;
+              var totalSales = 0;
+              var totalTip = 0;
+              var totalSales = 0;
+              var totalTax = 0;
+              var hash = 0;
+
+              var results = Object.size(data) -1;
+
+              var adj = data.paidIO;
+
+              if (isNaN(adj))
+              {
+                 adj = 0;
+              }
+
+              var html = "<table id=\"tblPC\" class=\"table table-striped  table-condensed font-12px\" style=\"width:100%\" align=\"center\" border=\"1\"><thead><tr><th class=\"text-center\">Name</th> \
+              <th class=\"text-center\">Net <br /> *Hash</th> \
+              <th class=\"text-center\">Tax</th> \
+              <th class=\"text-center\">Tips</th> \
+              <th class=\"text-center\">Gross</th> \
+              </tr> \
+              <tr>\
+              <th class=\"text-center\" data-sort=\"string-ins\"> <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+              <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+              <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+              <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+              <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+              </tr> \
+              </thead><tbody>";
+
+
+              for (var i=0; i < results; i++)
+              {
+                 hash = +data[i].hash;
+                 totalTip = +data[i].totalTip + +data[i].grat;
+                 totalTax = +data[i].totalTax;
+                 totalDiscounts = +data[i].totalDiscounts;
+                 totalSales = +data[i].totalSales + totalDiscounts;
+                 totalPayments = totalTip + totalSales + totalTax + hash;
+                 html += "<tr>";
+                 html += "<td class=\"text-right\">" + data[i].profitCenterName + " </td>";
+
+                 if (hash > 0)
+                 {
+                    html += "<td class=\"text-right hash\">" + round2dp(totalSales) + " <br> <b>*" + hash + "</b></td>";
+                 }
+                 else
+                 {
+                    html += "<td class=\"text-right\">" + round2dp(totalSales) + " </td>";
+                 }
+
+                 html += "<td class=\"text-right\">" + round2dp(totalTax) + " </td>";
+                 html += "<td class=\"text-right\">" + round2dp(totalTip) + " </td>";
+                 html += "<td class=\"text-right\">" + round2dp(totalPayments) + " </td>";
+                 html += "</tr>";
+                 amtGT = round2dp(+amtGT + +totalSales + hash);
+                 taxGT = round2dp(+taxGT + +totalTax);
+                 tipGT = round2dp(+tipGT + +totalTip);
+                 grandTotal = round2dp(+amtGT + +taxGT + +tipGT + hash);
+              }
+
+              amtGT = round2dp(amtGT - adj);
+              grandTotal = round2dp(grandTotal - adj);
+              adj = adj*-1; // set to neg for display
+
+              html += "</tbody><tfoot>";
+              html += "<tr>";
+              html += "<th class=\"text-right\"> - Paid Outs </th>";
+              html += "<th class=\"text-right\">" + adj + "</th>";
+              html += "<th class=\"text-right\"></th>";
+              html += "<th class=\"text-right\"></th>";
+              html += "<th class=\"text-right\">" + adj + "</th>";
+              html += "</tr>";
+
+              html += "<th class=\"text-center\">Totals</th>";
+              html += "<th class=\"text-right\">" + amtGT + "</th>";
+              html += "<th class=\"text-right\">" + taxGT + "</th>";
+              html += "<th class=\"text-right\">" + tipGT + "</th>";
+              html += "<th class=\"text-right\">" + grandTotal + "</th>";
+              html += "</tr></tfoot>";
+              $('#profitCenterDetails').html(html);
+              $("#tblPC").stupidtable();
+           },
+        });
+
+        $.ajax({
+           url: 'http://rpower.com:1338/api.php?op=salesByServer',
+           dataType: 'json',
+           crossDomain: true,
+           method: 'post',
+           data: postData,
+           success: function(data)
+           {
+              var amtTotal = 0;
+              var tipTotal = 0;
+              var grandTotal = 0;
+              var totalSales = 0;
+              var totalTip = 0;
+              var totalSales = 0;
+              var totalTax = 0;
+              var taxTotal = 0;
+              var results = Object.size(data);
+              var html = "<table id=\"tblSBS\" class=\"table table-striped  table-condensed font-12px\" style=\"width:100%\" align=\"center\" border=\"1\"><thead><tr><th class=\"text-center\">Name</th> \
+              <th class=\"text-center\">Net</th> \
+              <th class=\"text-center\">Tax</th> \
+              <th class=\"text-center\">Tips</th> \
+              <th class=\"text-center\">Gross</th> \
+              </tr> \
+              <tr>\
+              <th class=\"text-center\" data-sort=\"string-ins\"> <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+              <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+              <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+              <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+              <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+              </tr> \
+              </thead><tbody>";
+
+              for (var i=0; i < results; i++)
+              {
+                 totalTax = +data[i].totalTax;
+                 totalTip = +data[i].totalTip;
+                 totalGrat = +data[i].grat;
+                 subtractGrat = +data[i].subtractGrat;
+                 totalHash = +data[i].hash;
+                 totalTip = +totalTip + +totalGrat;
+                 totalSales = +data[i].totalSales - totalGrat - totalTax - totalHash - subtractGrat;
+                 totalPayments = round2dp(totalTip + +totalSales + totalTax);
+                 totalSales = round2dp(totalSales);
+                 totalSales = +totalSales;
+                 html += "<tr>";
+                 html += "<td class=\"text-right\">" + data[i].serverName + " </td>";
+                 html += "<td class=\"text-right\">" + round2dp(totalSales) + " </td>";
+                 html += "<td class=\"text-right\">" + round2dp(totalTax) + " </td>";
+                 html += "<td class=\"text-right\">" + round2dp(totalTip) + " </td>";
+                 html += "<td class=\"text-right\">" + totalPayments + " </td>";
+                 html += "</tr>";
+                 amtTotal = round2dp(+amtTotal + +totalSales);
+                 amtTotal = round2dp(+amtTotal);
+                 taxTotal = round2dp(+taxTotal + +totalTax);
+                 tipTotal = round2dp(+tipTotal + +totalTip);
+                 grandTotal = round2dp(+totalPayments + +grandTotal);
+              }
+              html += "</tbody><tfoot>";
+              html += "<tr>";
+              html += "<th class=\"text-center\">Totals</th>";
+              html += "<th class=\"text-right\">" + amtTotal + "</th>";
+              html += "<th class=\"text-right\">" + taxTotal + "</th>";
+              html += "<th class=\"text-right\">" + tipTotal + "</th>";
+              html += "<th class=\"text-right\">" + grandTotal + "</th>";
+              html += "</tr></tfoot>";
+              $('#salesByServer').html(html);
+              $("#tblSBS").stupidtable();
+           },
+        });
+
+        $.ajax({
+          url: 'http://rpower.com:1338/api.php?op=mealtimeSales',
+          dataType: 'json',
+          crossDomain: true,
+          method: 'post',
+          data: postData,
+          success: function(data) {
+             var amtTotal = 0;
+             var tipTotal = 0;
+             var grandTotal = 0;
+             var totalSales = 0;
+             var totalTip = 0;
+             var taxTotal = 0;
+             var amtGT = 0;
+             var taxGT = 0;
+             var tipGT = 0;
+             var results = Object.size(data);
+             var html = "<table id=\"tblMTS\" class=\"table table-striped  table-condensed font-12px\" style=\"width:100%\" align=\"center\" border=\"1\"><thead><tr><th class=\"text-center\">Hour</th> \
+             <th class=\"text-center\">Net</th> \
+             <th class=\"text-center\">Tax</th> \
+             <th class=\"text-center\">Tips</th> \
+             <th class=\"text-center\">Sales</th> \
+             </tr>\
+             <tr>\
+             <th class=\"text-center\" data-sort=\"string-ins\"> <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+             <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+             <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+             <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+             <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+             </tr> \
+             </thead><tbody>";
+             for (var i=0; i < results; i++)
+             {
+               totalTip = +data[i].tip + +data[i].grat;
+               totalTax = +data[i].tax;
+               totalDiscounts = +data[i].discount;
+               totalGrat = +data[i].grat;
+               totalSales = +data[i].totalSales + +totalDiscounts;
+               totalPayments = totalTip + totalSales + totalTax;
+               html += "<tr>";
+               html += "<td class=\"text-right\">" + data[i].mealtime + " </td>";
+               html += "<td class=\"text-right\">" + round2dp(totalSales) + " </td>";
+               html += "<td class=\"text-right\">" + round2dp(totalTax) + " </td>";
+               html += "<td class=\"text-right\">" + round2dp(totalTip) + " </td>";
+               html += "<td class=\"text-right\">" + round2dp(totalPayments) + " </td>";
+               html += "</tr>";
+               amtGT = round2dp(+amtGT + +totalSales);
+               taxGT = round2dp(+taxGT + +totalTax);
+               tipGT = round2dp(+tipGT + +totalTip);
+               grandTotal = round2dp(+amtGT + +taxGT + +tipGT);
+             }
+             html += "</tbody><tfoot>";
+             html += "<th class=\"text-center\">Totals</th>";
+             html += "<th class=\"text-right\">" + amtGT + "</th>";
+             html += "<th class=\"text-right\">" + taxGT + "</th>";
+             html += "<th class=\"text-right\">" + tipGT + "</th>";
+             html += "<th class=\"text-right\">" + grandTotal + "</th>";
+             html += "</tr></tfoot>";
+             $('#mealtimeSales').html(html);
+             $("#tblMTS").stupidtable();
+          },
+          error: function(data)
+          {
+             console.log(data);
+          }
+       });
+
+       //tableTurns(postData); Can't get the data correct
+       salesByRoom(postData);
+
+     }
+  },
+});
+
+   $('#btnHourly').click(function(e)
+   {
+      $(".bgTimeframe > .btn").addClass("btn-default");
+      $(".bgTimeframe > .btn").removeClass("btn-success");
+      $("#btnHourly").addClass("btn-success");
+      hourlySales(postData, 'hourly');
+   });
+
+   $('#btnHalfHour').click(function(e)
+   {
+      $(".bgTimeframe > .btn").addClass("btn-default");
+      $(".bgTimeframe > .btn").removeClass("btn-success");
+      $("#btnHalfHour").addClass("btn-success");
+      hourlySales(postData, 'halfhour');
+   });
+
+   $('#btnQtr').click(function(e)
+   {
+      $(".bgTimeframe > .btn").addClass("btn-default");
+      $(".bgTimeframe > .btn").removeClass("btn-success");
+      $("#btnQtr").addClass("btn-success");
+      hourlySales(postData, 'quarter');
+   });
+
+}
+
+$('tr[id^="PMT"]').click(function(e)
+{
+   debugger;
+   var rid = this.id.substring(3);
+   var user = localStorage.getItem("user");
+   var pass = localStorage.getItem("pass");
+   var selectedStore = localStorage.getItem("selectedStore");
+   var date = localStorage.getItem("selectedDate");
+   var token = localStorage.getItem("token");
+   var rpowerCG = localStorage.getItem("cg");
+   // var uuid = localStorage.getItem("uuid");
+   var license = localStorage.getItem("license");
+  // k3ReconstructCheck(token, rpowerCG, selectedStore, date, rid, license, uuid);
+  k3ReconstructCheck(token, rpowerCG, selectedStore, date, rid, license);
+});
+
+function hourlySales(postData, timeframe) // code formatted
+{
+   $.ajax({
+      url: 'http://rpower.com:1338/api.php?op=hourlySales&timeFrame=' + timeframe,
+      dataType: 'json',
+      crossDomain: true,
+      method: 'post',
+      data: postData,
+      success: function(data)
+      {
+         var amtTotal = 0;
+         var tipTotal = 0;
+         var grandTotal = 0;
+         var totalSales = 0;
+         var totalTip = 0;
+         var taxTotal = 0;
+         var amtGT = 0;
+         var taxGT = 0;
+         var tipGT = 0;
+         var results = Object.size(data);
+         var html = "<table id=\"tblHS\" class=\"table table-striped  table-condensed font-12px\" style=\"width:100%\" align=\"center\" border=\"1\"><thead><tr><th class=\"text-center\">Hour</th> \
+         <th class=\"text-center\">Net</th> \
+         <th class=\"text-center\">Tax</th> \
+         <th class=\"text-center\">Tips</th> \
+         <th class=\"text-center\">Gross</th> \
+         </tr> \
+         <tr>\
+         <th class=\"text-center\" data-sort=\"int\"> <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+         <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+         <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+         <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+         <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+         </tr> \
+         </thead><tbody>";
+
+         for (var i=0; i < results; i++)
+         {
+            totalTip = +data[i].totalTip + +data[i].grat;
+            totalTax = +data[i].totalTax;
+            totalDiscounts = +data[i].discounts;
+            totalGrat = +data[i].grat;
+            totalSales = +data[i].totalSales + +totalDiscounts;
+            totalPayments = totalTip + totalSales + totalTax;
+            html += "<tr>";
+            html += "<td class=\"text-right\">" + data[i].hr + " </td>";
+            html += "<td class=\"text-right\">" + round2dp(totalSales) + " </td>";
+            html += "<td class=\"text-right\">" + round2dp(totalTax) + " </td>";
+            html += "<td class=\"text-right\">" + round2dp(totalTip) + " </td>";
+            html += "<td class=\"text-right\">" + round2dp(totalPayments) + " </td>";
+            html += "</tr>";
+            amtGT = round2dp(+amtGT + +totalSales);
+            taxGT = round2dp(+taxGT + +totalTax);
+            tipGT = round2dp(+tipGT + +totalTip);
+            grandTotal = round2dp(+amtGT + +taxGT + +tipGT);
+        }
+        html += "</tbody><tfoot>";
+        html += "<th class=\"text-center\">Totals</th>";
+        html += "<th class=\"text-right\">" + amtGT + "</th>";
+        html += "<th class=\"text-right\">" + taxGT + "</th>";
+        html += "<th class=\"text-right\">" + tipGT + "</th>";
+        html += "<th class=\"text-right\">" + grandTotal + "</th>";
+        html += "</tr></tfoot>";
+        $('#hourlySales').html(html);
+        $("#tblHS").stupidtable();
+      },
+   });
+}
+
+function paymentMethodDetails(postData, totalGuests, totalChecks, totalSalesLy, totalGuestsLy, totalChecksLy)
+{
+   $.ajax({
+      url: 'http://rpower.com:1338/api.php?op=paymentMethodDetails',
+      dataType: 'json',
+      crossDomain: true,
+      method: 'post',
+      data: postData,
+      success: function(data) {
+         var amtGT = 0;
+         var hashGT = 0;
+         var tipGT = 0;
+         var grandTotal = 0;
+         var taxGT = 0;
+         var adjGT = 0;
+         var amt = 0;
+         var tip = 0;
+         var tax = 0;
+         var adj = 0;
+         var hash = 0;
+
+         var html = "<table id=\"tblPmt\" class=\"table table-striped  table-condensed font-12px\" style=\"width:100%\" align=\"center\" border=\"2\"><thead><tr><thead><th class=\"text-center\">Name <br /></th> \
+         <th class=\"text-center\">Net<br><b>*Hash</b> <br /></th> \
+         <th class=\"text-center\">Tax <br /></th> \
+         <th class=\"text-center\">Tip <br /></th> \
+         <th class=\"text-center\">Gross <br /></th> \
+         </tr> \
+         <tr>\
+         <th class=\"text-center\" data-sort=\"string-ins\"> <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+         <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+         <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+         <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+         <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+         </tr> \
+         </thead><tbody>";
+         var results = Object.size(data)-1;
+
+         var adj = data.paidIO;
+
+         if (isNaN(adj))
+         {
+            adj = 0;
+         }
+
+         for (var i=0; i < results; i++)
+         {
+            amt = +data[i].amt - data[i].tax - data[i].grat;
+            hash = +data[i].hash;
+            tip = +data[i].tip + +data[i].grat;
+            tax = +data[i].tax;
+            totalPayments = round2dp(tip + amt + tax);
+
+            //html += "<tr id=\"PMT" + data[i].pmid + "\">";
+            html += "<tr id=\"PMT" + data[i].pmid + "\">";
+            html += "<td class=\"text-right\"><a data-pmMID=\"" + data[i].pmid + "\">" + data[i].payment + "</a></td>";
+//            id=\"aRID\" data-rid=" + ticketRID
+            if (hash > 0)
+            {
+               html += "<td class=\"text-right hash\">" + round2dp(amt) + " <br> <b>*" + hash + "</b></td>";
+            }
+            else
+            {
+               html += "<td class=\"text-right\">" + round2dp(amt) + " </td>";
+            }
+
+            html += "<td class=\"text-right\">" + round2dp(tax) + " </td>";
+            html += "<td class=\"text-right\">" + round2dp(tip) + " </td>";
+            html += "<td class=\"text-right\">" + totalPayments + "</td>";
+            html += "</tr>";
+            amtGT = round2dp(+amtGT + amt);
+            taxGT = round2dp(+taxGT + tax);
+            tipGT = round2dp(+tipGT + tip);
+            hashGT = round2dp(+hashGT + hash);
+            grandTotal = round2dp(+amtGT + +taxGT + +tipGT);
+         }
+
+         amtGT = round2dp(amtGT - adj);
+         grandTotal = round2dp(grandTotal - adj);
+         adj = adj*-1; // set to neg for display
+
+         html +=  "</tbody><tfoot>";
+         html += "<tr>";
+         html += "<th class=\"text-right\"> - Paid Outs </th>";
+         html += "<th class=\"text-right\">" + adj + "</th>";
+         html += "<th class=\"text-right\"></th>";
+         html += "<th class=\"text-right\"></th>";
+         html += "<th class=\"text-right\">" + adj + "</th>";
+         html += "</tr>";
+
+         html += "<tr><th class=\"text-center\">Totals</th>";
+         html += "<th class=\"text-right\">" + amtGT + "</th>";
+         html += "<th class=\"text-right\">" + taxGT + "</th>";
+         html += "<th class=\"text-right\">" + tipGT + "</th>";
+         html += "<th class=\"text-right\">" + grandTotal + "</th>";
+         html += "</tr></tfoot>";
+         $('#paymentMethods').html(html);
+
+         $("#tblPmt").stupidtable();
+
+         adj = adj*-1; //reset back to positive for calculations
+
+         grandTotal = round2dp(+grandTotal);
+         $('#grossSales').html(grandTotal);
+         grandTotalNH = round2dp(grandTotal - adj - hashGT);
+         var checkAverage = grandTotalNH/totalChecks;
+         var guestAverage = grandTotalNH/totalGuests;
+         $('#checkAverage').html(checkAverage.toFixed(2));
+         $('#guestAverage').html(guestAverage.toFixed(2));
+
+         if (totalSalesLy > 0)
+         {
+
+         var checkAverageLy = totalSalesLy/totalChecksLy;
+         $('#checkAverageLy').html("LY: " + checkAverageLy.toFixed(2));
+         var guestAverageLy = totalSalesLy/totalGuestsLy;
+         $('#guestAverageLy').html("LY: " + guestAverageLy.toFixed(2));
+         }
+
+         $('tr[id^="PMT"]').click(function(e)
+         {
+            var pmtMID = this.id.substring(3);
+            var user = localStorage.getItem("user");
+            var pass = localStorage.getItem("pass");
+            var selectedStore = localStorage.getItem("selectedStore");
+            var date = localStorage.getItem("selectedDate");
+            var token = localStorage.getItem("token");
+            var rpowerCG = localStorage.getItem("cg");
+            // var uuid = localStorage.getItem("uuid");
+            var license = localStorage.getItem("license");
+           // k3ReconstructCheck(token, rpowerCG, selectedStore, date, rid, license, uuid);
+           k3PaymentCheckList(token, rpowerCG, selectedStore, date, pmtMID, license);
+         });
+
+      },
+   });
+}
+
+//   k3PaymentCheckList(token, this.dataset.paymentMID);
+
+/*
+function tableTurns(postData) // code formatted
+{
+   $.ajax({
+      url: 'http://rpower.com:1338/api.php?op=tableTurnTime',
+      dataType: 'json',
+      crossDomain: true,
+      method: 'post',
+      data: postData,
+      success: function(data)
+      {
+         var guests = 0;
+         var ent = 0;
+         var bev = 0;
+         var time = 0;
+         var totalMin = 0;
+         var count = 0;
+         var dif = 0;
+         var currentRoom = "";
+         var avg = 0;
+         var bevCount = 0;
+         var entCount = 0;
+         var guests = 0;
+         var guestCount = 0;
+         var ttlGuests = 0;
+         var ttlEnt = 0;
+         var ttlBev = 0;
+         var ttlAvg = 0;
+
+         var roomArray = [];
+         var timeArray = [];
+
+         var results = Object.size(data);
+         var html = "<table id=\"tblHS\" class=\"table table-striped  table-condensed font-12px\" style=\"width:100%\" align=\"center\" border=\"1\"><thead><tr><th class=\"text-center\">Room</th> \
+         <th class=\"text-center\"># Guests</th> \
+         <th class=\"text-center\">Ent</th> \
+         <th class=\"text-center\">Bev</th> \
+         <th class=\"text-center\">Avg Time</th> \
+         </tr> \
+         <tr>\
+         <th class=\"text-center\" data-sort=\"text\"> <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+         <th class=\"text-center\" data-sort=\"text\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+         <th class=\"text-center\" data-sort=\"text\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+         <th class=\"text-center\" data-sort=\"text\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+         <th class=\"text-center\" data-sort=\"text\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+         </tr> \
+         </thead><tbody>";
+
+         currentRoom = data[0].name.toUpperCase();
+
+         for (var i=0; i < results; i++)
+         {
+            dif = +data[i].dif;
+            ent = +data[i].ent_count;
+            bev = +data[i].bev_count;
+            guests = +data[i].guest_count;
+            time = dif + time;
+            count = count +1;
+            entCount = ent + entCount;
+            bevCount = bev + bevCount;
+            guestCount = guests + guestCount;
+            ttlGuests = ttlGuests + guests;
+            ttlEnt = ttlEnt + ent;
+            ttlBev = ttlBev + bev;
+
+            if (currentRoom != data[i].name.toUpperCase() && i != 0)
+            {
+               avg = time/count;
+               roomArray.push({name: currentRoom, totalTime: time, totalTables: count, avg: avg, ent: entCount, bev: bevCount, guests: guestCount});
+               time = 0;
+               count = 0;
+               entCount = 0;
+               bevCount = 0;
+               guests = 0;
+               guestCount = 0;
+               currentRoom = data[i].name.toUpperCase();
+               ttlAvg = ttlAvg + avg;
+            }
+         }
+
+         console.log(roomArray);
+         var results = Object.size(roomArray);
+
+         ttlAvg = ttlAvg / results;
+
+         for (var i=0; i < results; i++)
+         {
+            html += "<tr>";
+            html += "<td class=\"text-right\">" + roomArray[i].name + " </td>";
+            html += "<td class=\"text-right\">" + roomArray[i].guests + " </td>";
+            html += "<td class=\"text-right\">" + roomArray[i].ent + " </td>";
+            html += "<td class=\"text-right\">" + roomArray[i].bev + " </td>";
+            html += "<td class=\"text-right\">" + round2dp(roomArray[i].avg) + " </td>";
+            html += "</tr>";
+        }
+        html += "</tbody><tfoot>";
+        html += "<th class=\"text-center\">Totals</th>";
+        html += "<th class=\"text-right\">" + ttlGuests + "</th>";
+        html += "<th class=\"text-right\">" + ttlEnt + "</th>";
+        html += "<th class=\"text-right\">" + ttlBev + "</th>";
+        html += "<th class=\"text-right\">" + round2dp(ttlAvg) + "</th>";
+        html += "</tr></tfoot>";
+        $('#tableTurns').html(html);
+        //$("#tblHS").stupidtable();
+
+      },
+   });
+}
+*/
+
+function salesByRoom(postData, totalGuests, totalChecks, totalSalesLy, totalGuestsLy, totalChecksLy)
+{
+   $.ajax({
+     url: 'http://rpower.com:1338/api.php?op=salesByRoom',
+     dataType: 'json',
+     crossDomain: true,
+     method: 'post',
+     data: postData,
+     success: function(data) {
+        var amtTotal = 0;
+        var tipTotal = 0;
+        var grandTotal = 0;
+        var totalSales = 0;
+        var totalTip = 0;
+        var taxTotal = 0;
+        var amtGT = 0;
+        var taxGT = 0;
+        var tipGT = 0;
+        var results = Object.size(data);
+        var html = "<table id=\"tblSBR\" class=\"table table-striped  table-condensed font-12px\" style=\"width:100%\" align=\"center\" border=\"1\"><thead><tr><th class=\"text-center\">Room</th> \
+        <th class=\"text-center\">Net</th> \
+        <th class=\"text-center\">Tax</th> \
+        <th class=\"text-center\">Tips</th> \
+        <th class=\"text-center\">Sales</th> \
+        </tr>\
+        <tr>\
+        <th class=\"text-center\" data-sort=\"string-ins\"><span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+        <th class=\"text-center\" data-sort=\"float\"><span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+        <th class=\"text-center\" data-sort=\"float\"><span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+        <th class=\"text-center\" data-sort=\"float\"><span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+        <th class=\"text-center\" data-sort=\"float\"><span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+        </tr> \
+        </thead><tbody>";
+        for (var i=0; i < results; i++)
+        {
+          totalTip = +data[i].tip + +data[i].grat;
+          totalTax = +data[i].tax;
+          totalDiscounts = +data[i].discount;
+          totalGrat = +data[i].grat;
+          totalSales = +data[i].totalSales + +totalDiscounts;
+          totalPayments = totalTip + totalSales + totalTax;
+          html += "<tr>";
+          html += "<td class=\"text-right\">" + data[i].name + " </td>";
+          html += "<td class=\"text-right\">" + round2dp(totalSales) + " </td>";
+          html += "<td class=\"text-right\">" + round2dp(totalTax) + " </td>";
+          html += "<td class=\"text-right\">" + round2dp(totalTip) + " </td>";
+          html += "<td class=\"text-right\">" + round2dp(totalPayments) + " </td>";
+          html += "</tr>";
+          amtGT = round2dp(+amtGT + +totalSales);
+          taxGT = round2dp(+taxGT + +totalTax);
+          tipGT = round2dp(+tipGT + +totalTip);
+          grandTotal = round2dp(+amtGT + +taxGT + +tipGT);
+        }
+        html += "</tbody><tfoot>";
+        html += "<th class=\"text-center\">Totals</th>";
+        html += "<th class=\"text-right\">" + amtGT + "</th>";
+        html += "<th class=\"text-right\">" + taxGT + "</th>";
+        html += "<th class=\"text-right\">" + tipGT + "</th>";
+        html += "<th class=\"text-right\">" + grandTotal + "</th>";
+        html += "</tr></tfoot>";
+        $('#salesByRoom').html(html);
+        $("#tblSBR").stupidtable();
+     },
+     error: function(data)
+     {
+        console.log(data);
+     }
+  });
+}
+
+ $('#infoPayment').click(function(e)
+{
+   $('#mGHeader').html('<h3>Payments Grid</h3>');
+   $('#mGBody').html('This is a net payment amount that includes Hash (I.E. Deposits and Gift Card Sales) <br /> * Indicates hash');
+   $('#modalGeneric').modal("show");
+});
+
+$('#infoServerSales').click(function(e)
+{
+   $('#mGHeader').html('<h3>Server Sales Grid</h3>');
+   $('#mGBody').html('Matches with Server Sales on the Close Day Report. Does not include \'House Grat\' or other grats that are retained by the house and not paid to a staff member. Does not include Hash (I.E. Deposits and Gift Card Sales)');
+   $('#modalGeneric').modal("show");
+});
+
+$('#infoProfitCenters').click(function(e)
+{
+   $('#mGHeader').html('<h3>Profit Center Grid</h3>');
+   $('#mGBody').html('Matches with the Profit Centers in \'Sales Totals\' on the Close Day Report. Includes Hash (I.E. Deposits and Gift Card Sales)');
+   $('#modalGeneric').modal("show");
+});
+
+$('#infoHourlySales').click(function(e)
+{
+   $('#mGHeader').html('<h3>Hourly Sales Grid</h3>');
+   $('#mGBody').html('Shows sales by the time the item was added to the check. Does not include Hash (I.E. Deposits and Gift Card Sales)');
+   $('#modalGeneric').modal("show");
+});
+
+$('#infoMealtimeSales').click(function(e)
+{
+   $('#mGHeader').html('<h3>Mealtime Sales Grid</h3>');
+   $('#mGBody').html('Shows sales by Mealtime. Matches with Mealtime on the Close Day Report. Does not include Hash (I.E. Deposits and Gift Card Sales)');
+   $('#modalGeneric').modal("show");
+});
+
+$('#infoGrossSales').click(function(e)
+{
+  $('#mGHeader').html('<h3>Gross Sales</h3>');
+  $('#mGBody').html('This is a gross amount that includes Hash items such as Deposits and Gift Card Sales but does not include Open Checks. <br /><b>Calculation: Item Sales - Discounts + Tax + Tips/Grat + Hash - Paid-Outs = Gross</b>');
+  $('#modalGeneric').modal("show");
+});
+
+$('#infoTableTurns').click(function(e)
+{
+  $('#mGHeader').html('<h3>Table Turns</h3>');
+  $('#mGBody').html('This shows the total guests, entrees, beverages, and average time checks have been open on a table. For more accurate data, servers should close checks out in a timely manner.</b>');
+  $('#modalGeneric').modal("show");
+});
+
+$('#infoSalesByRoom').click(function(e)
+{
+  $('#mGHeader').html('<h3>Sales By Room</h3>');
+  $('#mGBody').html('This shows sales by room.');
+  $('#modalGeneric').modal("show");
+});
+
+ function k3StrToUpper(string)
+ {
+    return string.toUpperCase();
+ }
+ function round2dp(num)
+ {
+  if(num === undefined || num === null)
+  {
+  num = 0;
+  }
+  return num.toFixed(2);
+ }
+ function zeroPad(nr, base)
+ {
+   var len = (String(base).length - String(nr).length)+1;
+   return len > 0? new Array(len).join('0')+nr : nr;
+ }
+ Object.size = function(obj)
+ {
+   var size = 0, key;
+   for (key in obj)
+   {
+     if (obj.hasOwnProperty(key)) size++;
+   }
+     return size;
+ };
+
+ </script>
+
+<div class="container-fluid">
+<!-- Top Stats -->
+  <div class="row">
+     <div class="col-xs-12">
+        <div class="col-xs-6">
+           <div class="panel panel-default panel-heading-tile">
+              <div class="panel-body" id="divGrossSales">
+                 <h2><b><div class="text-center" id="grossSales"></div></b></h2>
+                 <div class="panel-footer text-center" id="divGrossSales">
+                    <small class="pull-right"><span id="infoGrossSales" class="glyphicon glyphicon-question-sign"></span></small>
+                   <b>Gross Sales</b><br>
+                   <b><div class="ly" id="grossSalesLy">&nbsp</div></b>
+                 </div>
+              </div>
+           </div>
+        </div>
+        <div class="col-xs-6">
+           <div class="panel panel-default panel-tile panel-heading-tile">
+              <div class="panel-body" id="divDiscounts">
+                 <h2><b><div class="text-center" id="checkAverage"></div></b></h2>
+                 <div class="panel-footer text-center" id="divCheckAverage">
+                   <b>Check Avg</b><br>
+                   <b><div class="ly" id="checkAverageLy">&nbsp</div></b>
+                 </div>
+              </div>
+           </div>
+        </div>
+     </div>
+  </div>
+
+  <div class="row">
+     <div class="col-xs-12">
+        <div class="col-xs-6">
+           <div class="panel panel-default panel-heading-tile">
+              <div class="panel-body" id="divGrossSales">
+                 <h2><b><div class="text-center" id="guestAverage"></div></b></h2>
+                 <div class="panel-footer text-center" id="divGuestAverage">
+                   <b>Guest Avg</b><br>
+                   <b><div class="ly" id="guestAverageLy">&nbsp</div></b>
+                 </div>
+              </div>
+           </div>
+        </div>
+        <div class="col-xs-6">
+           <div class="panel panel-default panel-heading-tile">
+              <div class="panel-body" id="divTotalEntrees">
+                 <h2><b><div class="text-center" id="totalEntrees"></div></b></h2>
+                 <div class="panel-footer text-center" id="divTotalEntrees">
+                   <b>Entrees</b><br>
+                   <b><div class="ly" id="totalEntreesLy">&nbsp</div></b>
+                 </div>
+              </div>
+           </div>
+        </div>
+     </div>
+
+
+  <div class="row">
+     <div class="col-xs-12">
+        <div class="col-xs-6">
+           <div class="panel panel-default panel-heading-tile">
+              <div class="panel-body" id="divGrossSales">
+                 <h2><b><div class="text-center" id="totalGuests"></div></b></h2>
+                 <div class="panel-footer text-center" id="divTotalGuests">
+                   <b>Guests</b><br>
+                   <b><div class="ly" id="totalGuestsLy">&nbsp</div></b>
+                 </div>
+              </div>
+           </div>
+        </div>
+        <div class="col-xs-6">
+           <div class="panel panel-default panel-tile panel-heading-tile">
+              <div class="panel-body" id="totalDiscounts">
+                 <h2><b><div class="text-center" id="totalChecks"></div></b></h2>
+                 <div class="panel-footer text-center" id="divTotalChecks">
+                   <b>Checks</b><br>
+                   <b><div class="ly" id="totalChecksLy">&nbsp</div></b>
+                 </div>
+              </div>
+           </div>
+        </div>
+     </div>
+  </div>
+
+<!-- End Top Stats -->
+
+<div class="row">
+<div class="col-lg-6">
+  <div class="panel panel-default">
+     <div class="panel-heading">
+        <i class="fa fa-pie-chart-o fa-fw"></i><b>Payment Methods <small class="pull-right"><span id="infoPayment" class="glyphicon glyphicon-question-sign"></small></b>
+     </div>
+     <div class="panel-body" style="overflow-y: scroll">
+        <div class="col-lg-12">
+           <div id="paymentMethods"></div>
+        </div>
+     </div>
+  </div>
+</div>
+
+<div class="col-lg-6">
+  <div class="panel panel-default">
+     <div class="panel-heading">
+        <i class="fa fa-pie-chart-o fa-fw"></i><b>Profit Centers <small class="pull-right"><span id="infoProfitCenters" class="glyphicon glyphicon-question-sign"></small></b>
+     </div>
+     <div class="panel-body" style="overflow-y: scroll">
+        <div class="col-lg-12">
+           <div id="profitCenterDetails"></div>
+        </div>
+     </div>
+  </div>
+</div>
+</div>
+
+<div class="row">
+<div class="col-lg-6">
+  <div class="panel panel-default">
+     <div class="panel-heading">
+        <i class="fa fa-pie-chart-o fa-fw"></i><b>Server Sales <small class="pull-right"><span id="infoServerSales" class="glyphicon glyphicon-question-sign"></small></b>
+     </div>
+     <div class="panel-body" style="overflow-y: scroll">
+        <div class="col-lg-12">
+           <div id="salesByServer"></div>
+        </div>
+     </div>
+  </div>
+</div>
+
+<div class="col-lg-6">
+  <div class="panel panel-default">
+     <div class="panel-heading">
+        <i class="fa fa-pie-chart-o fa-fw"></i><b>Hourly Sales <small class="pull-right"><span id="infoHourlySales" class="glyphicon glyphicon-question-sign"></small></b>
+           <b class="pull-right"><div class="btn-group bgTimeframe" role="group"><button type="button" class="btn btn-success btn-xs" id="btnHourly">Hour</button>&nbsp<button type="button" class="btn btn-default btn-xs" id="btnHalfHour">Half</button>&nbsp<button type="button" class="btn btn-default btn-xs" id="btnQtr">Quarter</button></div></b>
+     </div>
+     <div class="panel-body" style="overflow-y: scroll">
+        <div class="col-lg-12">
+           <div id="hourlySales"></div>
+        </div>
+     </div>
+  </div>
+</div>
+</div>
+
+<div class="row">
+   <div class="col-lg-6">
+     <div class="panel panel-default">
+        <div class="panel-heading">
+           <i class="fa fa-pie-chart-o fa-fw"></i><b>Mealtime Sales <small class="pull-right"><span id="infoMealtimeSales" class="glyphicon glyphicon-question-sign"></small></b>
+        </div>
+        <div class="panel-body" style="overflow-y: scroll">
+           <div class="col-lg-12">
+              <div id="mealtimeSales"></div>
+           </div>
+        </div>
+     </div>
+   </div>
+
+   <div class="col-lg-6">
+     <div class="panel panel-default">
+        <div class="panel-heading">
+           <i class="fa fa-pie-chart-o fa-fw"></i><b>Sales By Room<small class="pull-right"><span id="infoSalesByRoom" class="glyphicon glyphicon-question-sign"></small></b>
+        </div>
+        <div class="panel-body" style="overflow-y: scroll">
+           <div class="col-lg-12">
+              <div id="salesByRoom"></div>
+           </div>
+        </div>
+     </div>
+   </div>
+
+   <!--
+   <div class="col-lg-6">
+     <div class="panel panel-default">
+        <div class="panel-heading">
+           <i class="fa fa-pie-chart-o fa-fw"></i><b>Table Turns by Room <small class="pull-right"><span id="infoTableTurns" class="glyphicon glyphicon-question-sign"></small></b>
+        </div>
+        <div class="panel-body" style="overflow-y: scroll">
+           <div class="col-lg-12">
+              <div id="tableTurns"></div>
+           </div>
+        </div>
+     </div>
+   </div>
+   -->
+</div>
+
+
+</div>
