@@ -160,7 +160,12 @@ function refreshData(user, pass, rpowerCg, rpowerStore, token, selectedStore, se
                  var totalTipsLy = +data[999999999].total_tips;
                  var totalTaxLy = +data[999999999].total_tax;
                  var totalHashLy = +data[999999999].hash_sales;
+
                  var totalPIOLy = +data[999999999].paidIO;
+                 if (isNaN(totalPIOLy))
+                 {
+                    totalPIOLy = 0;
+                 }
                  var itemSalesLy = +data[999999999].item_sales + totalDiscountsLy + totalTaxLy + totalTipsLy + totalHashLy - totalPIOLy;
                  $('#totalGuestsLy').html("LY: " + data[999999999].guest_count);
                  $('#totalChecksLy').html("LY: " + data[999999999].total_checks);
@@ -217,11 +222,11 @@ function refreshData(user, pass, rpowerCg, rpowerStore, token, selectedStore, se
               <th class=\"text-center\">Gross</th> \
               </tr> \
               <tr>\
-              <th class=\"text-center\" data-sort=\"string-ins\"> <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
-              <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
-              <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
-              <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
-              <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+              <th class=\"text-center\" data-sort=\"string-ins\"> <span class=\"glyphicon glyphicon-arrow-down glyph-tiny\"></span> &nbsp <span class=\"glyphicon glyphicon-arrow-up glyph-tiny\"></span></th> \
+              <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-arrow-down glyph-tiny\"></span> &nbsp <span class=\"glyphicon glyphicon-arrow-up glyph-tiny\"></span></th> \
+              <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-arrow-down glyph-tiny\"></span> &nbsp <span class=\"glyphicon glyphicon-arrow-up glyph-tiny\"></span></th> \
+              <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-arrow-down glyph-tiny\"></span> &nbsp <span class=\"glyphicon glyphicon-arrow-up glyph-tiny\"></span></th> \
+              <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-arrow-down glyph-tiny\"></span> &nbsp <span class=\"glyphicon glyphicon-arrow-up glyph-tiny\"></span></th> \
               </tr> \
               </thead><tbody>";
 
@@ -304,11 +309,11 @@ function refreshData(user, pass, rpowerCg, rpowerStore, token, selectedStore, se
               <th class=\"text-center\">Gross</th> \
               </tr> \
               <tr>\
-              <th class=\"text-center\" data-sort=\"string-ins\"> <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
-              <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
-              <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
-              <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
-              <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+              <th class=\"text-center\" data-sort=\"string-ins\"> <span class=\"glyphicon glyphicon-arrow-down glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-arrow-up glyph-tiny\"></span></th> \
+              <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-arrow-down glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-arrow-up glyph-tiny\"></span></th> \
+              <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-arrow-down glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-arrow-up glyph-tiny\"></span></th> \
+              <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-arrow-down glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-arrow-up glyph-tiny\"></span></th> \
+              <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-arrow-down glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-arrow-up glyph-tiny\"></span></th> \
               </tr> \
               </thead><tbody>";
 
@@ -374,11 +379,11 @@ function refreshData(user, pass, rpowerCg, rpowerStore, token, selectedStore, se
              <th class=\"text-center\">Sales</th> \
              </tr>\
              <tr>\
-             <th class=\"text-center\" data-sort=\"string-ins\"> <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
-             <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
-             <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
-             <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
-             <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+             <th class=\"text-center\" data-sort=\"string-ins\"> <span class=\"glyphicon glyphicon-arrow-down glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-arrow-up glyph-tiny\"></span></th> \
+             <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-arrow-down glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-arrow-up glyph-tiny\"></span></th> \
+             <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-arrow-down glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-arrow-up glyph-tiny\"></span></th> \
+             <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-arrow-down glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-arrow-up glyph-tiny\"></span></th> \
+             <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-arrow-down glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-arrow-up glyph-tiny\"></span></th> \
              </tr> \
              </thead><tbody>";
              for (var i=0; i < results; i++)
@@ -493,11 +498,11 @@ function hourlySales(postData, timeframe) // code formatted
          <th class=\"text-center\">Gross</th> \
          </tr> \
          <tr>\
-         <th class=\"text-center\" data-sort=\"int\"> <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
-         <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
-         <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
-         <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
-         <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+         <th class=\"text-center\" data-sort=\"int\"> <span class=\"glyphicon glyphicon-arrow-down glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-arrow-up glyph-tiny\"></span></th> \
+         <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-arrow-down glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-arrow-up glyph-tiny\"></span></th> \
+         <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-arrow-down glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-arrow-up glyph-tiny\"></span></th> \
+         <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-arrow-down glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-arrow-up glyph-tiny\"></span></th> \
+         <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-arrow-down glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-arrow-up glyph-tiny\"></span></th> \
          </tr> \
          </thead><tbody>";
 
@@ -562,11 +567,11 @@ function paymentMethodDetails(postData, totalGuests, totalChecks, totalSalesLy, 
          <th class=\"text-center\">Gross <br /></th> \
          </tr> \
          <tr>\
-         <th class=\"text-center\" data-sort=\"string-ins\"> <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
-         <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
-         <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
-         <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
-         <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+         <th class=\"text-center\" data-sort=\"string-ins\"> <span class=\"glyphicon glyphicon-arrow-down glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-arrow-up glyph-tiny\"></span></th> \
+         <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-arrow-down glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-arrow-up glyph-tiny\"></span></th> \
+         <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-arrow-down glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-arrow-up glyph-tiny\"></span></th> \
+         <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-arrow-down glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-arrow-up glyph-tiny\"></span></th> \
+         <th class=\"text-center\" data-sort=\"float\">  <span class=\"glyphicon glyphicon-arrow-down glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-arrow-up glyph-tiny\"></span></th> \
          </tr> \
          </thead><tbody>";
          var results = Object.size(data)-1;
@@ -713,11 +718,11 @@ function tableTurns(postData) // code formatted
          <th class=\"text-center\">Avg Time</th> \
          </tr> \
          <tr>\
-         <th class=\"text-center\" data-sort=\"text\"> <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
-         <th class=\"text-center\" data-sort=\"text\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
-         <th class=\"text-center\" data-sort=\"text\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
-         <th class=\"text-center\" data-sort=\"text\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
-         <th class=\"text-center\" data-sort=\"text\">  <span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+         <th class=\"text-center\" data-sort=\"text\"> <span class=\"glyphicon glyphicon-arrow-down glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-arrow-up glyph-tiny\"></span></th> \
+         <th class=\"text-center\" data-sort=\"text\">  <span class=\"glyphicon glyphicon-arrow-down glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-arrow-up glyph-tiny\"></span></th> \
+         <th class=\"text-center\" data-sort=\"text\">  <span class=\"glyphicon glyphicon-arrow-down glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-arrow-up glyph-tiny\"></span></th> \
+         <th class=\"text-center\" data-sort=\"text\">  <span class=\"glyphicon glyphicon-arrow-down glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-arrow-up glyph-tiny\"></span></th> \
+         <th class=\"text-center\" data-sort=\"text\">  <span class=\"glyphicon glyphicon-arrow-down glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-arrow-up glyph-tiny\"></span></th> \
          </tr> \
          </thead><tbody>";
 
@@ -809,11 +814,11 @@ function salesByRoom(postData, totalGuests, totalChecks, totalSalesLy, totalGues
         <th class=\"text-center\">Sales</th> \
         </tr>\
         <tr>\
-        <th class=\"text-center\" data-sort=\"string-ins\"><span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
-        <th class=\"text-center\" data-sort=\"float\"><span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
-        <th class=\"text-center\" data-sort=\"float\"><span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
-        <th class=\"text-center\" data-sort=\"float\"><span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
-        <th class=\"text-center\" data-sort=\"float\"><span class=\"glyphicon glyphicon-sort-by-attributes glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-sort-by-attributes-alt glyph-tiny\"></span></th> \
+        <th class=\"text-center\" data-sort=\"string-ins\"><span class=\"glyphicon glyphicon-arrow-down glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-arrow-up glyph-tiny\"></span></th> \
+        <th class=\"text-center\" data-sort=\"float\"><span class=\"glyphicon glyphicon-arrow-down glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-arrow-up glyph-tiny\"></span></th> \
+        <th class=\"text-center\" data-sort=\"float\"><span class=\"glyphicon glyphicon-arrow-down glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-arrow-up glyph-tiny\"></span></th> \
+        <th class=\"text-center\" data-sort=\"float\"><span class=\"glyphicon glyphicon-arrow-down glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-arrow-up glyph-tiny\"></span></th> \
+        <th class=\"text-center\" data-sort=\"float\"><span class=\"glyphicon glyphicon-arrow-down glyph-tiny glyph-flip\"></span> &nbsp <span class=\"glyphicon glyphicon-arrow-up glyph-tiny\"></span></th> \
         </tr> \
         </thead><tbody>";
         for (var i=0; i < results; i++)

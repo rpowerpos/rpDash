@@ -1,38 +1,11 @@
-/*
 function k3DrawChart(columnData, rowData, chartOptions, chartDiv)
 {
-   var data = new google.visualization.DataTable();
-   foreach (columnData as column)
-   {
-      data.addColumn(column.type, column.name); // type = number/string, name of column
-   }
-
-
-   data.addColumn('string', 'Topping');
-   data.addColumn('number', 'Slices');
-   data.addRows
-   (
-      [
-         ['Mushrooms', 3],
-         ['Onions', 1],
-         ['Olives', 1],
-         ['Zucchini', 1],
-         ['Pepperoni', 2]
-      ]
-   );
-
-   // Set chart options
-   var options = {
-                 'title':'How Much Pizza I Ate Last Night',
-                 'width':400,
-                 'height':300
-                 };
-
-
-   var chart = new google.visualization.PieChart(document.getElementById(chartDiv));
-   chart.draw(data, options);
+   google.charts.load('current', {'packages':['corechart']});
+   google.charts.setOnLoadCallback(drawChart);
+   var data = new google.visualization.DataTable(jsonData);
+   var chart = new google.visualization.PieChart(document.getElementById(chart_Div));
+   chart.draw(data, {width: 400, height: 240});
 }
-*/
 
 function k3ReconstructCheck (token, rpowerCg, storeMID, date, checkNumber, license)
 {
