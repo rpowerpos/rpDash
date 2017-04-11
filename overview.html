@@ -119,6 +119,10 @@ function refreshData(user, pass, rpowerCg, selectedStore, token, selectedStore, 
                         $('#guests').html(+data[0].guest_count);
                         $('#checks').html(+data[0].total_checks);
                         var totalPIO = +data[0].paidIO;
+                        if (isNaN(totalPIO))
+                        {
+                           totalPIO = 0;
+                        }
                         var itemSales = round2dp(+data[0].item_sales - +data[0].grat + +data[0].total_discounts + +data[0].houseGrat - totalPIO);
                         //var skipLastYear = 0;
 
